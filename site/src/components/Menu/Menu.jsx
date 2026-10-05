@@ -81,7 +81,7 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
                       aria-disabled={m.soon || undefined}
                       onMouseEnter={() => setActive(m.label)}
                       onFocus={() => setActive(m.label)}
-                      onClick={() => { if (!m.soon) onNavigate(m.at); }}
+                      onClick={() => { if (!m.soon) onNavigate(m.action || m.at); }}
                       initial={{ y: '110%' }}
                       animate={{ y: '0%', transition: { duration: 1.1, ease: EASE, delay: 0.15 + i * 0.06 } }}
                       exit={{ y: '110%', transition: { duration: 0.4, ease: EASE } }}

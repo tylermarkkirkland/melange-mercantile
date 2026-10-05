@@ -1,0 +1,505 @@
+.verify {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  overflow-y: auto;
+  background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(18, 26, 31, 0.55), rgba(4, 5, 6, 0.96) 70%);
+  backdrop-filter: blur(6px);
+  color: var(--silver);
+}
+
+.verify__close {
+  position: fixed;
+  top: 40px;
+  left: 56px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 500 12px/1 var(--font-sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.verify__close-icon {
+  position: relative;
+  width: 28px;
+  height: 14px;
+}
+
+.verify__close-icon::before,
+.verify__close-icon::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 1px;
+  background: var(--chrome);
+}
+
+.verify__close-icon::before { transform: rotate(32deg); }
+.verify__close-icon::after { transform: rotate(-32deg); }
+
+/* same spot as the docked pillar */
+.verify__mark {
+  position: fixed;
+  top: 41px;
+  left: 50%;
+  height: 46px;
+  transform: translateX(-50%);
+  filter: invert(0.82);
+  pointer-events: none;
+}
+
+.verify__stage {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 140px 56px 80px;
+}
+
+/* ---------- entry ---------- */
+.verify__entry {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.verify__eyebrow {
+  margin: 0 0 18px;
+  font: 500 11px/1.4 var(--font-sans);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.verify__title {
+  margin: 0;
+  font: 400 clamp(30px, 3.4vw, 48px) / 1.15 var(--font-ceremonial);
+  letter-spacing: 0.14em;
+  color: var(--chrome);
+}
+
+.verify__intro {
+  margin: 22px 0 0;
+  max-width: 44ch;
+  font: 400 17px/1.75 var(--font-sans);
+  color: var(--silver);
+}
+
+.verify__control {
+  width: 100%;
+  margin-top: 44px;
+  text-align: left;
+}
+
+.verify__label {
+  display: block;
+  margin-bottom: 10px;
+  font: 500 12px/1 var(--font-sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--silver-light);
+}
+
+.verify__input-wrap {
+  position: relative;
+}
+
+.verify__input {
+  width: 100%;
+  height: 68px;
+  padding: 0 24px;
+  background: rgba(18, 26, 31, 0.8);
+  border: 1px solid var(--slate);
+  border-radius: 2px;
+  font: 300 28px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--chrome);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.verify__input::placeholder {
+  color: var(--pewter);
+  opacity: 0.7;
+}
+
+.verify__input:focus {
+  outline: none;
+  border-color: var(--ember);
+  box-shadow: 0 0 0 4px rgba(232, 130, 43, 0.18);
+}
+
+.verify__input:disabled {
+  opacity: 0.45;
+}
+
+/* gentle guidance: fades in, never shakes, never red */
+.verify__hint {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 48px;
+  margin: 12px 0 0;
+  font: 400 14px/1.6 var(--font-sans);
+  color: var(--silver-light);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.verify__hint.is-shown {
+  opacity: 1;
+  transform: none;
+}
+
+.verify__hint-icon {
+  flex: 0 0 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--silver-light);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 500 11px/1 var(--font-mono);
+}
+
+.verify__submit {
+  width: 100%;
+  height: 58px;
+  margin-top: 8px;
+  background: var(--chrome);
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  font: 500 17px/1 var(--font-sans);
+  color: var(--void);
+  transition: background 0.3s ease;
+}
+
+.verify__submit:hover { background: #e2e3e5; }
+.verify__submit:disabled { cursor: progress; background: var(--silver); }
+
+.verify__demo {
+  margin: 22px 0 0;
+  font: 400 13px/1.6 var(--font-sans);
+  color: var(--pewter);
+}
+
+/* the seal press: pillar comes down over the field, one ember ring spreads */
+.verify__press {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.verify__press img {
+  height: 92px;
+  filter: invert(0.85) drop-shadow(0 16px 20px rgba(0, 0, 0, 0.8));
+  animation: press 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.verify__ripple {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 1px solid var(--ember);
+  border-radius: 50%;
+  animation: ripple 1.2s 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes press {
+  0% { transform: translateY(-120px) scale(1.25); opacity: 0; }
+  60% { transform: translateY(0) scale(1.06); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes ripple {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ---------- results ---------- */
+.verify__certificate {
+  width: min(1040px, 100%);
+  padding: 52px 56px 44px;
+  background: rgba(18, 26, 31, 0.86);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+.verify__cert-head {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--slate);
+}
+
+.verify__cert-head .verify__eyebrow { margin: 10px 0 0; }
+
+.verify__seal {
+  height: 54px;
+  filter: invert(0.82);
+}
+
+.verify__result-title {
+  margin: 0;
+  font: 400 clamp(26px, 2.6vw, 36px) / 1.15 var(--font-ceremonial);
+  letter-spacing: 0.15em;
+  color: var(--chrome);
+}
+
+.verify__result-title:focus { outline: none; }
+
+.verify__advisory {
+  margin: 26px 0 0;
+  max-width: 62ch;
+  font: 400 16px/1.75 var(--font-sans);
+  color: var(--silver-light);
+}
+
+.verify__cert-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 56px;
+  margin-top: 32px;
+}
+
+.verify__fields {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 32px;
+}
+
+.verify__field dt {
+  margin-bottom: 6px;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.verify__field dd {
+  margin: 0;
+  font: 500 19px/1.3 var(--font-sans);
+  color: var(--chrome);
+}
+
+.verify__field dd.is-mono {
+  font: 300 20px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* status: the only ember on the page, always with a shape and a label */
+.verify__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0 0;
+  padding: 10px 18px 10px 14px;
+  border-radius: 24px;
+  font: 500 12px/1 var(--font-sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.verify__status.is-active { border: 1px solid var(--ember); color: var(--ember); }
+.verify__status.is-lapsed { border: 1px solid var(--pewter); color: var(--silver-light); }
+
+.verify__diamond {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background: currentColor;
+}
+
+.verify__status.is-lapsed .verify__diamond {
+  background: none;
+  border: 1px solid currentColor;
+}
+
+.verify__custody {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.verify__custody li {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 0 0 22px 28px;
+}
+
+.verify__custody li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--silver-light);
+}
+
+.verify__custody li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 17px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--slate);
+}
+
+.verify__when {
+  font: 300 12px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--pewter);
+}
+
+.verify__what {
+  font: 500 17px/1.3 var(--font-sans);
+  color: var(--chrome);
+}
+
+.verify__detail {
+  font: 400 14px/1.5 var(--font-sans);
+  color: var(--silver);
+}
+
+.verify__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--slate);
+}
+
+.verify__actions.is-centered {
+  justify-content: center;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.verify__button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 26px;
+  background: none;
+  border: 1px solid var(--pewter);
+  border-radius: 2px;
+  cursor: pointer;
+  font: 500 16px/1 var(--font-sans);
+  color: var(--chrome);
+  text-decoration: none;
+}
+
+.verify__button.is-primary {
+  background: var(--chrome);
+  border-color: var(--chrome);
+  color: var(--void);
+}
+
+.verify__link {
+  min-height: 44px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 400 16px/1 var(--font-sans);
+  color: var(--silver-light);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* not found: same calm frame, no alarm */
+.verify__notfound {
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.verify__mark-dim {
+  height: 72px;
+  margin-bottom: 30px;
+  filter: invert(0.82);
+  opacity: 0.4;
+}
+
+.verify__echo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 32px 0;
+  padding: 20px 40px;
+  background: rgba(18, 26, 31, 0.8);
+}
+
+.verify__echo .verify__label { margin: 0; }
+
+.verify__echo-code {
+  font: 300 30px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--chrome);
+}
+
+.verify :focus-visible {
+  outline: 1px solid var(--ember);
+  outline-offset: 6px;
+}
+
+/* headings receive focus only so screen readers announce the result; no visible ring */
+.verify .verify__result-title:focus,
+.verify .verify__result-title:focus-visible {
+  outline: none;
+}
+
+@media (max-width: 860px) {
+  .verify__stage { padding: 120px 20px 60px; }
+  .verify__close { top: 20px; left: 20px; }
+  .verify__certificate { padding: 36px 24px 32px; }
+  .verify__cert-body { grid-template-columns: 1fr; gap: 36px; }
+  .verify__actions { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verify__press img,
+  .verify__ripple { animation: none; }
+}
+
+/* the certificate is a document: print it on a light ground, everything else hidden */
+@media print {
+  body * { visibility: hidden; }
+  .verify__certificate,
+  .verify__certificate * { visibility: visible; }
+  .verify__certificate {
+    position: absolute;
+    inset: 0;
+    background: #e9eef0;
+    color: #070a0c;
+    box-shadow: none;
+  }
+  .verify__certificate .verify__result-title,
+  .verify__certificate .verify__field dd,
+  .verify__certificate .verify__what { color: #070a0c; }
+  .verify__certificate .verify__status.is-active { color: #9a3412; border-color: #9a3412; }
+  .verify__seal { filter: none; }
+  .verify__actions { display: none; }
+}

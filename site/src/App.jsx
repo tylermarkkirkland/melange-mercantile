@@ -7,6 +7,7 @@ import MelangeSection from './components/MelangeSection/MelangeSection.jsx';
 import GallerySection from './components/GallerySection/GallerySection.jsx';
 import ArrivalSection from './components/ArrivalSection/ArrivalSection.jsx';
 import Menu from './components/Menu/Menu.jsx';
+import Verify from './components/Verify/Verify.jsx';
 import { TIMELINE } from './data/intro.js';
 import { createIntroClock } from './lib/introClock.js';
 import { updateScrollState } from './lib/scrollState.js';
@@ -29,6 +30,7 @@ export default function App() {
   const [arrakisActive, setArrakisActive] = useState(false);
   const [melangeActive, setMelangeActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(() => window.location.hash === '#verify');
   const menuButtonRef = useRef(null);
 
   // Follow the shared clock; only re-render when the phase actually changes
@@ -91,12 +93,29 @@ export default function App() {
   // The page holds still while the menu is open
   useEffect(() => {
     if (!lenis || phase !== 'interface') return;
-    if (menuOpen) lenis.stop();
+    if (menuOpen || verifyOpen) lenis.stop();
     else lenis.start();
-  }, [menuOpen, lenis, phase]);
+  }, [menuOpen, verifyOpen, lenis, phase]);
+
+  // Verify is its own page in spirit: #verify in the address opens it, Back closes it
+  const openVerify = useCallback(() => {
+    setMenuOpen(false);
+    setVerifyOpen(true);
+    if (window.location.hash !== '#verify') window.history.pushState(null, '', '#verify');
+  }, []);
+  const closeVerify = useCallback(() => {
+    setVerifyOpen(false);
+    if (window.location.hash === '#verify') window.history.pushState(null, '', window.location.pathname + window.location.search);
+  }, []);
+  useEffect(() => {
+    const onPop = () => setVerifyOpen(window.location.hash === '#verify');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
+    if (at === 'verify') { openVerify(); return; }
     setMenuOpen(false);
     const y = at * window.innerHeight;
     if (lenis) {
@@ -105,7 +124,7 @@ export default function App() {
     } else {
       window.scrollTo({ top: y, behavior: reducedMotion ? 'auto' : 'smooth' });
     }
-  }, [lenis, reducedMotion]);
+  }, [lenis, reducedMotion, openVerify]);
 
   const skip = useCallback(() => {
     clock.skip();
@@ -137,6 +156,7 @@ export default function App() {
         menuOpen={menuOpen}
         onMenu={() => setMenuOpen(true)}
         menuButtonRef={menuButtonRef}
+        onVerify={openVerify}
       />
       <div className="track">
         <section className="track__arrival" id="arrival" aria-label="Arrival" />
@@ -146,6 +166,7 @@ export default function App() {
         <ArrivalSection />
       </div>
       <Menu open={menuOpen} onClose={closeMenu} onNavigate={navigate} returnFocusTo={menuButtonRef} />
+      <Verify open={verifyOpen && phase === 'interface'} onClose={closeVerify} />
     </>
   );
 }

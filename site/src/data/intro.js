@@ -92,6 +92,6 @@ export const MENU = [
   { label: 'The Melange', at: 5.0, image: '/photos/tin.webp' },
   { label: 'The Imperium', at: 7.2, image: '/photos/seal.webp' },
   { label: 'Influence', at: 14.5, image: '/photos/arrival.webp' },
-  { label: 'Verify', at: null, image: '/photos/certificate.webp', soon: true },
+  { label: 'Verify', action: 'verify', image: '/photos/certificate.webp' },
   { label: 'Allocation', at: null, image: '/photos/crate.webp', soon: true },
 ];
