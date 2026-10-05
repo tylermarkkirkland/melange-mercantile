@@ -128,16 +128,23 @@ export default function App() {
   const openVerify = useCallback(() => {
     setMenuOpen(false);
     const v = verifyRef.current;
-    if (window.location.hash !== '#verify') window.history.replaceState(null, '', '#verify');
     scrollToEl(v?.section, { onComplete: () => v?.focusInput() });
   }, [scrollToEl]);
   // keep each Verify result in view as the section grows or shrinks
   const onVerifyResult = useCallback((el) => scrollToEl(el, { duration: 0.9 }), [scrollToEl]);
+  // A shared #verify link lands there once, then clears itself so reloads start at the top
   useEffect(() => {
     if (phase !== 'interface' || !lenis || window.location.hash !== '#verify') return;
     const v = verifyRef.current;
     lenis.scrollTo(v?.section, { immediate: true });
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
   }, [phase, lenis]);
+
+  // Reloads always begin at the landing, so the intro plays from the top
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+  }, []);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
