@@ -30,7 +30,7 @@ export default function App() {
   const [arrakisActive, setArrakisActive] = useState(false);
   const [melangeActive, setMelangeActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [verifyOpen, setVerifyOpen] = useState(() => window.location.hash === '#verify');
+  const verifyRef = useRef(null);
   const menuButtonRef = useRef(null);
 
   // Follow the shared clock; only re-render when the phase actually changes
@@ -93,25 +93,35 @@ export default function App() {
   // The page holds still while the menu is open
   useEffect(() => {
     if (!lenis || phase !== 'interface') return;
-    if (menuOpen || verifyOpen) lenis.stop();
+    if (menuOpen) lenis.stop();
     else lenis.start();
-  }, [menuOpen, verifyOpen, lenis, phase]);
+  }, [menuOpen, lenis, phase]);
 
-  // Verify is its own page in spirit: #verify in the address opens it, Back closes it
+  // Verify is the last section of the page. The header link and the menu glide down
+  // to it and put the cursor in the field; #verify in the address lands there too.
+  const scrollToEl = useCallback((el, opts = {}) => {
+    if (!el) return;
+    if (lenis) {
+      lenis.start();
+      lenis.scrollTo(el, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4), ...opts });
+    } else {
+      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+      opts.onComplete?.();
+    }
+  }, [lenis, reducedMotion]);
   const openVerify = useCallback(() => {
     setMenuOpen(false);
-    setVerifyOpen(true);
-    if (window.location.hash !== '#verify') window.history.pushState(null, '', '#verify');
-  }, []);
-  const closeVerify = useCallback(() => {
-    setVerifyOpen(false);
-    if (window.location.hash === '#verify') window.history.pushState(null, '', window.location.pathname + window.location.search);
-  }, []);
+    const v = verifyRef.current;
+    if (window.location.hash !== '#verify') window.history.replaceState(null, '', '#verify');
+    scrollToEl(v?.section, { onComplete: () => v?.focusInput() });
+  }, [scrollToEl]);
+  // keep each Verify result in view as the section grows or shrinks
+  const onVerifyResult = useCallback((el) => scrollToEl(el, { duration: 0.9 }), [scrollToEl]);
   useEffect(() => {
-    const onPop = () => setVerifyOpen(window.location.hash === '#verify');
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
+    if (phase !== 'interface' || !lenis || window.location.hash !== '#verify') return;
+    const v = verifyRef.current;
+    lenis.scrollTo(v?.section, { immediate: true });
+  }, [phase, lenis]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
@@ -164,9 +174,9 @@ export default function App() {
         <MelangeSection active={melangeActive} />
         <GallerySection />
         <ArrivalSection />
+        <Verify ref={verifyRef} onResult={onVerifyResult} />
       </div>
       <Menu open={menuOpen} onClose={closeMenu} onNavigate={navigate} returnFocusTo={menuButtonRef} />
-      <Verify open={verifyOpen && phase === 'interface'} onClose={closeVerify} />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { VERIFY_COPY, REGISTER, formatCode, isValidCode, isOffTrack } from '../../data/verify.js';
 import './Verify.css';
@@ -41,7 +41,7 @@ function Custody({ steps }) {
  * result is a certificate (active), an advisory (lapsed) or a dignified
  * "no record" with a way forward.
  */
-export default function Verify({ open, onClose }) {
+const Verify = forwardRef(function Verify({ onResult }, ref) {
   const [code, setCode] = useState('');
   const [state, setState] = useState('entry'); // entry | checking | active | lapsed | notfound
   const [showHint, setShowHint] = useState(false);
@@ -50,34 +50,31 @@ export default function Verify({ open, onClose }) {
   const timer = useRef(0);
 
   const record = REGISTER[code];
+  const sectionRef = useRef(null);
+  const prevState = useRef(state);
 
-  // Reset each time it opens; Escape closes
-  useEffect(() => {
-    if (!open) return undefined;
-    setState('entry');
-    setShowHint(false);
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    const focus = setTimeout(() => inputRef.current?.focus(), 400);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      clearTimeout(focus);
-      clearTimeout(timer.current);
-    };
-  }, [open, onClose]);
+  // The page can focus the field after scrolling here ("Verify a consignment", the menu, #verify)
+  useImperativeHandle(ref, () => ({
+    section: sectionRef.current,
+    focusInput: () => inputRef.current?.focus({ preventScroll: true }),
+  }));
 
-  // Move focus to each result's heading so screen readers announce it
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  // After each result, bring the section's top back into view and move focus to
+  // the heading so screen readers announce it. Only on a real change of state,
+  // never on load, so the page never steals focus.
   useEffect(() => {
-    if (['active', 'lapsed', 'notfound'].includes(state)) {
-      const t = setTimeout(() => headingRef.current?.focus(), 450);
-      return () => clearTimeout(t);
-    }
-    if (state === 'entry' && open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 450);
-      return () => clearTimeout(t);
-    }
-    return undefined;
-  }, [state, open]);
+    if (prevState.current === state) return undefined;
+    prevState.current = state;
+    if (state === 'checking') return undefined;
+    onResult?.(sectionRef.current);
+    const t = setTimeout(() => {
+      if (state === 'entry') inputRef.current?.focus({ preventScroll: true });
+      else headingRef.current?.focus({ preventScroll: true });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [state, onResult]);
 
   const onChange = (e) => {
     const next = formatCode(e.target.value);
@@ -102,24 +99,7 @@ export default function Verify({ open, onClose }) {
   const again = () => { setState('entry'); setShowHint(false); };
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="verify"
-          id="verify"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="verify-title"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.7, ease: EASE } }}
-          exit={{ opacity: 0, transition: { duration: 0.45, ease: EASE } }}
-        >
-          <button className="verify__close" type="button" onClick={onClose}>
-            <span className="verify__close-icon" aria-hidden="true" />
-            <span>Close</span>
-          </button>
-          <img className="verify__mark" src="/models/pillar.svg" alt="" aria-hidden="true" />
-
+        <section className="verify" id="verify" ref={sectionRef} aria-label="Verify a consignment">
           <div className="verify__stage" aria-live="polite" aria-busy={state === 'checking'}>
             <AnimatePresence mode="wait">
               {(state === 'entry' || state === 'checking') && (
@@ -254,8 +234,8 @@ export default function Verify({ open, onClose }) {
               )}
             </AnimatePresence>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </section>
   );
-}
+});
+
+export default Verify;

@@ -1,68 +1,17 @@
+/* The last chapter of the scroll: rises out of the dust after the arrival image */
 .verify {
-  position: fixed;
-  inset: 0;
-  z-index: 9;
-  overflow-y: auto;
-  background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(18, 26, 31, 0.55), rgba(4, 5, 6, 0.96) 70%);
-  backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(4, 5, 6, 0) 0%, rgba(4, 5, 6, 0.75) 22%, rgba(4, 5, 6, 0.9) 100%);
   color: var(--silver);
 }
 
-.verify__close {
-  position: fixed;
-  top: 40px;
-  left: 56px;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 44px;
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font: 500 12px/1 var(--font-sans);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--chrome);
-}
-
-.verify__close-icon {
-  position: relative;
-  width: 28px;
-  height: 14px;
-}
-
-.verify__close-icon::before,
-.verify__close-icon::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  top: 50%;
-  height: 1px;
-  background: var(--chrome);
-}
-
-.verify__close-icon::before { transform: rotate(32deg); }
-.verify__close-icon::after { transform: rotate(-32deg); }
-
-/* same spot as the docked pillar */
-.verify__mark {
-  position: fixed;
-  top: 41px;
-  left: 50%;
-  height: 46px;
-  transform: translateX(-50%);
-  filter: invert(0.82);
-  pointer-events: none;
-}
-
 .verify__stage {
-  min-height: 100%;
+  min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 140px 56px 80px;
+  padding: 160px 56px 120px;
 }
 
 /* ---------- entry ---------- */
@@ -473,7 +422,6 @@
 
 @media (max-width: 860px) {
   .verify__stage { padding: 120px 20px 60px; }
-  .verify__close { top: 20px; left: 20px; }
   .verify__certificate { padding: 36px 24px 32px; }
   .verify__cert-body { grid-template-columns: 1fr; gap: 36px; }
   .verify__actions { flex-wrap: wrap; }
