@@ -82,8 +82,9 @@ html.is-intro body {
   opacity: var(--mark-show, 0);
 }
 
-/* while the Influence photo opens, it slides over the logo */
-.mark-under .site-mark {
+/* as the gallery scrolls away, its photos slide up over the logo and the top bar fade */
+.mark-under .site-mark,
+.mark-under .topbar-fade {
   z-index: 1;
 }
 
