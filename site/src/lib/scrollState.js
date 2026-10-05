@@ -21,7 +21,6 @@ export const scrollState = {
   gallery: 0, // the photo row pans sideways
   arrive: 0, // the arrival image opens to full bleed
   arriveCopy: 0, // its line settles in
-  galleryLeaving: false, // the gallery's last photo scrolls up past the top bar
 };
 
 export function updateScrollState(y, vh) {
@@ -41,7 +40,5 @@ export function updateScrollState(y, vh) {
   scrollState.gallery = easeSoft(at(8.0, 4.5));
   scrollState.arrive = easeInOut(at(12.7, 1.4));
   scrollState.arriveCopy = at(13.9, 0.6);
-  // the gallery unpins at 12.5 and has scrolled away by 13.5
-  scrollState.galleryLeaving = y >= vh * 12.45 && y < vh * 13.5;
   return scrollState;
 }

@@ -49,6 +49,16 @@ export default function App() {
   useEffect(() => {
     const root = document.documentElement;
     const instance = reducedMotion ? null : new Lenis({ lerp: 0.075, smoothWheel: true });
+    let galleryWindows = null;
+    // true only while a gallery photo is physically passing behind the top bar logo
+    const galleryOverLogo = () => {
+      if (!galleryWindows) galleryWindows = document.querySelectorAll('.gallery__window');
+      for (const w of galleryWindows) {
+        const r = w.getBoundingClientRect();
+        if (r.top < 100 && r.bottom > 30 && r.right > 0 && r.left < window.innerWidth) return true;
+      }
+      return false;
+    };
     const apply = (y) => {
       const s = updateScrollState(y, window.innerHeight);
       root.style.setProperty('--dock', s.dock.toFixed(4));
@@ -61,9 +71,9 @@ export default function App() {
       // the docked logo appears as the 3D pillar finishes docking. It sits above
       // everything except the gallery's last photos, which slide up over it as the
       // row scrolls away
-      const docked = Math.min(1, Math.max(0, (s.dock - 0.9) / 0.1));
+      const docked = Math.min(1, Math.max(0, (s.dock - 0.95) / 0.05));
       root.style.setProperty('--mark-show', docked.toFixed(4));
-      root.classList.toggle('mark-under', s.galleryLeaving);
+      root.classList.toggle('mark-under', s.y > window.innerHeight * 7 && galleryOverLogo());
       setArrakisActive((prev) => (prev ? s.copy > 0.2 : s.copy > 0.6));
       setMelangeActive((prev) => (prev ? s.vialCopy > 0.2 : s.vialCopy > 0.6));
     };

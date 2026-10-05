@@ -232,6 +232,10 @@ export default function SunlitScene({ clock, reducedMotion }) {
       dustMat.uniforms.uAspect.value = camera.aspect;
     };
     window.addEventListener('resize', onResize);
+    // also catch size changes the window doesn't report, e.g. a scrollbar appearing
+    // after the intro, which would otherwise squeeze the scene off-centre
+    const resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(mount);
 
     // ?controls opens a small panel for placing the light by hand
     let gui = null;
@@ -308,13 +312,13 @@ export default function SunlitScene({ clock, reducedMotion }) {
       // Dock: shrink and spin up to the top centre
       const dockY = (1 - (2 * DOCK_CENTER_PX) / vh) * HALF_H;
       const dockScale = ((DOCK_HEIGHT_PX / vh) * 2 * HALF_H) / MARK_HEIGHT;
-      // the pillar finishes travelling at 90% of the dock, then holds still while
-      // it crossfades into the fixed logo in the top bar (same size and spot)
-      const travel = clamp01(dock / 0.9);
+      // the pillar finishes travelling at 95% of the dock, front-facing and still,
+      // then swaps quickly into the fixed logo in the top bar (same size and spot)
+      const travel = clamp01(dock / 0.95);
       const scale = lerp(1, dockScale, travel);
       markGroup.scale.setScalar(scale);
       markGroup.position.y = lerp(MARK_Y, dockY, travel);
-      const handoff = clamp01((dock - 0.9) / 0.1);
+      const handoff = clamp01((dock - 0.95) / 0.05);
       if (markMaterial) markMaterial.opacity = 1 - handoff;
       markGroup.visible = handoff < 0.999;
 
@@ -332,10 +336,12 @@ export default function SunlitScene({ clock, reducedMotion }) {
         tilt.x += (ty - tilt.x) * 0.07;
       }
 
-      const idle = reducedMotion ? 0 : Math.sin(seconds * 0.22) * 0.04;
+      // sway and cursor lean fade out as it docks, so it lands exactly front-on
+      const free = 1 - travel;
+      const idle = reducedMotion ? 0 : Math.sin(seconds * 0.22) * 0.04 * free;
       const spin = reducedMotion ? 0 : travel * Math.PI * 2;
-      markGroup.rotation.y = idle + spin + tilt.y;
-      markGroup.rotation.x = tilt.x;
+      markGroup.rotation.y = idle + spin + tilt.y * free;
+      markGroup.rotation.x = tilt.x * free;
       if (!reducedMotion) markGroup.position.y += Math.sin(seconds * 0.5) * 0.02 * (1 - travel);
 
       // Arrakis rises, scrolling turns the planet, then it sinks away for the vial
@@ -368,6 +374,7 @@ export default function SunlitScene({ clock, reducedMotion }) {
       window.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerleave', onLeave);
       window.removeEventListener('resize', onResize);
+      resizeObserver.disconnect();
       video.removeEventListener('seeked', onSeeked);
       video.removeAttribute('src');
       video.load();
