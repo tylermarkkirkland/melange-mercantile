@@ -1,0 +1,102 @@
+/* Tall track; the frame pins while the vial turns */
+.melange {
+  position: relative;
+  height: 300vh;
+}
+
+.melange__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr minmax(240px, 30vw) 1fr;
+  align-items: center;
+  padding: 0 56px;
+  pointer-events: none;
+}
+
+.melange__copy {
+  grid-column: 1;
+  max-width: 400px;
+  opacity: calc(var(--vialcopy, 0) * 1.2);
+}
+
+.melange__eyebrow,
+.melange__reference {
+  margin: 0 0 22px;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.melange__headline {
+  margin: 0;
+  font: 400 clamp(32px, 3.4vw, 56px) / 1.15 var(--font-ceremonial);
+  letter-spacing: 0.14em;
+  color: var(--chrome);
+}
+
+.melange__line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.melange__line-inner {
+  display: block;
+  transform: translateY(calc((1 - min(1, var(--vialcopy, 0) * 1.6 - var(--i) * 0.25)) * 105%));
+}
+
+.melange__body {
+  margin: 26px 0 0;
+  font: 400 16px/1.75 var(--font-sans);
+  color: var(--silver);
+}
+
+.melange__record {
+  grid-column: 3;
+  justify-self: end;
+  text-align: right;
+  opacity: calc(var(--vialcopy, 0) * 1.2);
+}
+
+.melange__figures {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.melange__figure {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.melange__figure-label {
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--silver-light);
+}
+
+.melange__figure-value {
+  margin: 0;
+  font: 300 clamp(28px, 2.6vw, 44px) / 1 var(--font-mono);
+  letter-spacing: -0.01em;
+  color: var(--chrome);
+}
+
+@media (max-width: 900px) {
+  .melange__frame {
+    grid-template-columns: 1fr;
+    align-content: space-between;
+    padding: 18vh 20px 40px;
+  }
+  .melange__copy,
+  .melange__record { grid-column: 1; }
+  .melange__record { justify-self: start; text-align: left; }
+  .melange__figure { align-items: flex-start; }
+}

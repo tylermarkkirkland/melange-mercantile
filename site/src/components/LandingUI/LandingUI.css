@@ -1,0 +1,230 @@
+.landing {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  color: var(--silver);
+}
+
+.landing a,
+.landing button {
+  pointer-events: auto;
+}
+
+/* Top right: the only persistent controls */
+.landing__top {
+  position: absolute;
+  top: 40px;
+  left: 56px;
+  right: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.landing__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 400 15px/1 var(--font-sans);
+  letter-spacing: 0.01em;
+  color: var(--silver-light);
+  text-decoration: none;
+}
+
+.landing__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--silver-light), transparent);
+  transform-origin: left;
+  transform: scaleX(0.35);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing__link:hover::after,
+.landing__link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.landing__menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 500 12px/1 var(--font-sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.landing__menu-icon {
+  position: relative;
+  width: 28px;
+  height: 7px;
+  border-top: 1px solid var(--chrome);
+  border-bottom: 1px solid var(--chrome);
+}
+
+/* Words and statement leave as the pillar docks (--dock runs 0 → 1 on scroll) */
+.landing__fades {
+  position: absolute;
+  inset: 0;
+  opacity: calc(1 - var(--dock, 0) * 2.2);
+  transform: translateY(calc(var(--dock, 0) * -48px));
+  filter: blur(calc(var(--dock, 0) * 8px));
+}
+
+/* Wordmark sits just under the pillar (the pillar's base is at ~61% of the viewport) */
+.landing__center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 65vh;
+  display: flex;
+  justify-content: center;
+}
+
+.landing__wordmark {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-weight: 400;
+}
+
+.landing__word {
+  display: block;
+  font-family: var(--font-ceremonial);
+  white-space: nowrap;
+}
+
+.landing__word--top {
+  font-size: clamp(44px, 5.2vw, 84px);
+  line-height: 1;
+  letter-spacing: 0.24em;
+  margin-right: -0.24em; /* optical centring: trailing tracking */
+}
+
+/* brushed-metal fill, per letter so each can animate on its own */
+.landing__word--top .landing__letter {
+  background: linear-gradient(180deg, #eef1f3 0%, var(--chrome) 45%, #8d9296 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing__word--bottom {
+  font-size: 24px; /* Cinzel floor */
+  line-height: 1;
+  letter-spacing: 0.62em;
+  margin-right: -0.62em;
+  color: var(--silver-light);
+}
+
+.landing__letter {
+  display: inline-block;
+}
+
+/* Bottom: one statement, one cue */
+.landing__bottom {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  bottom: 44px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+}
+
+.landing__statement {
+  margin: 0;
+  max-width: 30ch;
+  font: 400 15px/1.75 var(--font-sans);
+  color: var(--silver);
+}
+
+.landing__cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.landing__cue-label {
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.landing__cue-line {
+  position: relative;
+  width: 1px;
+  height: 56px;
+  background: rgba(133, 135, 137, 0.35);
+  overflow: hidden;
+}
+
+.landing__cue-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 18px;
+  background: linear-gradient(180deg, transparent, var(--chrome));
+  animation: cue-travel 2.6s cubic-bezier(0.65, 0, 0.35, 1) 3;
+  top: -18px;
+}
+
+@keyframes cue-travel {
+  to { top: 56px; }
+}
+
+.landing__skip {
+  position: absolute;
+  right: 56px;
+  bottom: 44px;
+  min-height: 44px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.landing__skip:hover,
+.landing__skip:focus-visible {
+  color: var(--chrome);
+}
+
+.landing :focus-visible {
+  outline: 1px solid var(--ember);
+  outline-offset: 6px;
+}
+
+@media (max-width: 767px) {
+  .landing__top { top: 20px; left: 20px; right: 20px; }
+  .landing__link { font-size: 14px; }
+  .landing__bottom { left: 20px; right: 20px; bottom: 28px; grid-template-columns: 1fr; gap: 28px; }
+  .landing__cue { display: none; }
+  .landing__word--bottom { letter-spacing: 0.4em; margin-right: -0.4em; }
+  .landing__skip { right: 20px; bottom: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__cue-line::after { animation: none; }
+}

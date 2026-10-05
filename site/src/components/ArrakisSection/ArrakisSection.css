@@ -1,0 +1,115 @@
+/* Tall track; the frame pins while the planet turns */
+.arrakis {
+  position: relative;
+  height: 320vh;
+}
+
+.arrakis__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18vh 56px 48px;
+  pointer-events: none;
+}
+
+.arrakis__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  /* --copy runs 0 → 1 as the section settles */
+  opacity: calc(var(--copy, 0) * 1.2);
+}
+
+.arrakis__eyebrow {
+  margin: 0 0 22px;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.32em;
+  margin-right: -0.32em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.arrakis__headline {
+  margin: 0;
+  font: 400 clamp(32px, 3.8vw, 60px) / 1.15 var(--font-ceremonial);
+  letter-spacing: 0.14em;
+  color: var(--chrome);
+}
+
+/* each line rises through its own mask */
+.arrakis__line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.arrakis__line-inner {
+  display: block;
+  transform: translateY(calc((1 - min(1, var(--copy, 0) * 1.6 - var(--i) * 0.25)) * 105%));
+}
+
+.arrakis__body {
+  margin: 26px 0 0;
+  max-width: 44ch;
+  font: 400 16px/1.75 var(--font-sans);
+  color: var(--silver);
+}
+
+/* A soft fall to black behind the figures, so they read over the bright planet */
+.arrakis__frame::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42vh;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.88) 100%);
+  opacity: var(--copy, 0);
+  z-index: 0;
+}
+
+.arrakis__copy,
+.arrakis__stats {
+  position: relative;
+  z-index: 1;
+}
+
+.arrakis__stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+}
+
+.arrakis__stat {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 14px;
+}
+
+.arrakis__stat:nth-child(2) { align-items: center; text-align: center; }
+.arrakis__stat:nth-child(3) { align-items: flex-end; text-align: right; }
+
+.arrakis__stat-label {
+  font: 500 11px/1.4 var(--font-sans);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--silver-light);
+}
+
+.arrakis__stat-value {
+  margin: 0;
+  font: 300 clamp(40px, 4.4vw, 72px) / 1 var(--font-mono);
+  letter-spacing: -0.02em;
+  color: var(--chrome);
+}
+
+@media (max-width: 767px) {
+  .arrakis__frame { padding: 16vh 20px 32px; }
+  .arrakis__stats { grid-template-columns: 1fr; gap: 24px; }
+  .arrakis__stat:nth-child(n) { align-items: flex-start; text-align: left; }
+}

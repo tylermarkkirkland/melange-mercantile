@@ -1,0 +1,95 @@
+.arrival {
+  position: relative;
+  height: 260vh;
+}
+
+.arrival__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* opens from an inset window to full bleed */
+.arrival__window {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(
+    calc((1 - var(--arrive, 0)) * 16vh) calc((1 - var(--arrive, 0)) * 22vw) round calc((1 - var(--arrive, 0)) * 4px)
+  );
+  will-change: clip-path;
+}
+
+.arrival__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(calc(1.16 - var(--arrive, 0) * 0.16));
+  will-change: transform;
+}
+
+/* a fall to black at the bottom so the copy reads over the dunes */
+.arrival__window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.85) 100%);
+  opacity: var(--arrive-copy, 0);
+}
+
+/* bottom right: the open dunes, clear of the waiting figures */
+.arrival__copy {
+  position: absolute;
+  right: 56px;
+  bottom: 56px;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  opacity: calc(var(--arrive-copy, 0) * 1.3);
+  transform: translateY(calc((1 - var(--arrive-copy, 0)) * 24px));
+}
+
+.arrival__eyebrow {
+  margin: 0 0 20px;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--silver-light);
+}
+
+.arrival__headline {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font: 400 clamp(36px, 4vw, 64px) / 1.12 var(--font-ceremonial);
+  letter-spacing: 0.14em;
+  color: var(--chrome);
+}
+
+.arrival__body {
+  margin: 22px 0 0;
+  max-width: 36ch;
+  font: 400 16px/1.75 var(--font-sans);
+  color: var(--silver-light);
+}
+
+@media (max-width: 767px) {
+  .arrival__copy { left: 20px; right: 20px; bottom: 32px; align-items: flex-start; text-align: left; }
+  .arrival__headline { align-items: flex-start; }
+  .arrival__image { object-position: 62% 50%; }
+}
+
+/* stands in for the docked 3D pillar (46px tall, centred 64px from the top) */
+.arrival__mark {
+  position: absolute;
+  top: 41px;
+  left: 50%;
+  height: 46px;
+  transform: translateX(-50%);
+  filter: invert(0.82) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  opacity: calc(var(--arrive, 0) * 1.4 - 0.4);
+  pointer-events: none;
+}

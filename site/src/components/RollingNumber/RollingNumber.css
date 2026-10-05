@@ -1,0 +1,39 @@
+.rolling {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.rolling__window {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+
+.rolling__column {
+  display: flex;
+  flex-direction: column;
+  transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rolling__digit {
+  display: block;
+  height: 1em;
+}
+
+.rolling__static {
+  display: inline-block;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.rolling__static.is-active {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rolling__column,
+  .rolling__static {
+    transition: none;
+  }
+}

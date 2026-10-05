@@ -1,0 +1,127 @@
+/*
+ * Track layout in vw so the pan distance is exact:
+ * intro 38 + 5 panels × 62 + 5 gaps × 6 + end space 14 = 392vw → pans 292vw.
+ */
+.gallery {
+  position: relative;
+  height: 630vh; /* 80vh of hold before the pan, then 450vh of pan */
+}
+
+.gallery__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.gallery__track {
+  display: flex;
+  align-items: center;
+  gap: 6vw;
+  height: 100%;
+  padding-left: 56px;
+  width: max-content;
+  transform: translate3d(calc(var(--gallery, 0) * -292vw), 0, 0);
+  will-change: transform;
+}
+
+.gallery__intro {
+  flex: 0 0 calc(38vw - 56px);
+  opacity: calc(var(--gallery-in, 0) * 1.2);
+}
+
+.gallery__eyebrow {
+  margin: 0 0 22px;
+  font: 500 11px/1 var(--font-sans);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+.gallery__headline {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font: 400 clamp(34px, 3.6vw, 60px) / 1.15 var(--font-ceremonial);
+  letter-spacing: 0.14em;
+  color: var(--chrome);
+}
+
+.gallery__body {
+  margin: 26px 0 0;
+  max-width: 30ch;
+  font: 400 16px/1.75 var(--font-sans);
+  color: var(--silver);
+}
+
+.gallery__panel {
+  flex: 0 0 62vw;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* the photo sits slightly oversized in its window and drifts against the pan */
+.gallery__window {
+  position: relative;
+  height: 68vh;
+  overflow: hidden;
+  background: var(--basalt);
+}
+
+.gallery__window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px 20px rgba(0, 0, 0, 0.55);
+}
+
+.gallery__image {
+  position: absolute;
+  inset: 0 -12%;
+  width: 124%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate3d(calc((var(--gallery, 0) * 5 - var(--i)) * -4%), 0, 0) scale(1.04);
+  will-change: transform;
+}
+
+.gallery__caption {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: baseline;
+  column-gap: 22px;
+}
+
+.gallery__index {
+  font: 300 13px/1 var(--font-mono);
+  color: var(--pewter);
+}
+
+.gallery__word {
+  font: 400 24px/1 var(--font-ceremonial);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.gallery__line {
+  justify-self: end;
+  font: 400 15px/1.5 var(--font-sans);
+  color: var(--silver);
+}
+
+@media (max-width: 767px) {
+  .gallery__track { gap: 8vw; padding-left: 20px; transform: translate3d(calc(var(--gallery, 0) * -440vw), 0, 0); }
+  .gallery__intro { flex-basis: 80vw; }
+  .gallery__panel { flex-basis: 84vw; }
+  .gallery__window { height: 56vh; }
+  .gallery__caption { grid-template-columns: auto 1fr; row-gap: 10px; }
+  .gallery__line { grid-column: 1 / -1; justify-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery__image { transform: none; }
+}
