@@ -58,6 +58,13 @@ export default function App() {
       root.style.setProperty('--gallery-in', s.galleryIn.toFixed(4));
       root.style.setProperty('--arrive', s.arrive.toFixed(4));
       root.style.setProperty('--arrive-copy', s.arriveCopy.toFixed(4));
+      // the docked logo: appears as the 3D pillar finishes docking; slips under the
+      // Influence photo while it opens, then fades back in on top of it
+      const docked = Math.min(1, Math.max(0, (s.dock - 0.9) / 0.1));
+      const under = s.arrive > 0.01 && s.arriveCopy < 0.01;
+      const back = s.arriveCopy > 0 ? Math.min(1, s.arriveCopy * 2) : 1;
+      root.style.setProperty('--mark-show', (docked * (under ? 1 : back)).toFixed(4));
+      root.classList.toggle('mark-under', under);
       setArrakisActive((prev) => (prev ? s.copy > 0.2 : s.copy > 0.6));
       setMelangeActive((prev) => (prev ? s.vialCopy > 0.2 : s.vialCopy > 0.6));
     };
@@ -160,6 +167,8 @@ export default function App() {
       <SunlitScene clock={clock} reducedMotion={reducedMotion} />
       <div className="film-grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
+      <div className="topbar-fade" aria-hidden="true" />
+      <img className="site-mark" src="/models/logo-chrome.svg" alt="" aria-hidden="true" />
       <LandingUI
         phase={phase}
         onSkip={skip}

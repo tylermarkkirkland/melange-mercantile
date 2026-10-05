@@ -13,8 +13,6 @@ export default function ArrivalSection() {
         <div className="arrival__window">
           <img className="arrival__image" src={ARRIVAL.src} alt={ARRIVAL.alt} loading="lazy" decoding="async" />
         </div>
-        {/* the full-bleed photo covers the 3D docked mark, so a flat one stands in for it */}
-        <img className="arrival__mark" src="/models/pillar.svg" alt="" aria-hidden="true" />
         <div className="arrival__copy">
           <p className="arrival__eyebrow">{ARRIVAL.eyebrow}</p>
           <h2 className="arrival__headline" id="arrival-title">

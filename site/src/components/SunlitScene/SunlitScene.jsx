@@ -191,6 +191,7 @@ export default function SunlitScene({ clock, reducedMotion }) {
           o.material.metalness = 0.9;
           // a little rougher spreads the sun's highlight so it never flares
           o.material.roughness = light.roughness;
+          o.material.transparent = true; // so it can hand off to the fixed logo when docked
           markMaterial = o.material;
         }
       });
@@ -307,9 +308,15 @@ export default function SunlitScene({ clock, reducedMotion }) {
       // Dock: shrink and spin up to the top centre
       const dockY = (1 - (2 * DOCK_CENTER_PX) / vh) * HALF_H;
       const dockScale = ((DOCK_HEIGHT_PX / vh) * 2 * HALF_H) / MARK_HEIGHT;
-      const scale = lerp(1, dockScale, dock);
+      // the pillar finishes travelling at 90% of the dock, then holds still while
+      // it crossfades into the fixed logo in the top bar (same size and spot)
+      const travel = clamp01(dock / 0.9);
+      const scale = lerp(1, dockScale, travel);
       markGroup.scale.setScalar(scale);
-      markGroup.position.y = lerp(MARK_Y, dockY, dock);
+      markGroup.position.y = lerp(MARK_Y, dockY, travel);
+      const handoff = clamp01((dock - 0.9) / 0.1);
+      if (markMaterial) markMaterial.opacity = 1 - handoff;
+      markGroup.visible = handoff < 0.999;
 
       // Tilt toward the cursor when it's over (or near) the pillar
       if (!reducedMotion && finePointer) {
@@ -326,10 +333,10 @@ export default function SunlitScene({ clock, reducedMotion }) {
       }
 
       const idle = reducedMotion ? 0 : Math.sin(seconds * 0.22) * 0.04;
-      const spin = reducedMotion ? 0 : dock * Math.PI * 2;
+      const spin = reducedMotion ? 0 : travel * Math.PI * 2;
       markGroup.rotation.y = idle + spin + tilt.y;
       markGroup.rotation.x = tilt.x;
-      if (!reducedMotion) markGroup.position.y += Math.sin(seconds * 0.5) * 0.02 * (1 - dock);
+      if (!reducedMotion) markGroup.position.y += Math.sin(seconds * 0.5) * 0.02 * (1 - travel);
 
       // Arrakis rises, scrolling turns the planet, then it sinks away for the vial
       videoMat.uniforms.uRise.value = rise * (1 - 0.6 * planetOut);

@@ -81,15 +81,3 @@
   .arrival__headline { align-items: flex-start; }
   .arrival__image { object-position: 62% 50%; }
 }
-
-/* stands in for the docked 3D pillar (46px tall, centred 64px from the top) */
-.arrival__mark {
-  position: absolute;
-  top: 41px;
-  left: 50%;
-  height: 46px;
-  transform: translateX(-50%);
-  filter: invert(0.82) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
-  opacity: calc(var(--arrive, 0) * 1.4 - 0.4);
-  pointer-events: none;
-}
