@@ -8,8 +8,7 @@ export const VERIFY_COPY = {
   placeholder: 'MM-000-Δ',
   hint: 'Codes are MM, three digits and a Greek letter, like MM-114-Δ. You can type D for Δ.',
   submit: 'Verify',
-  checking: 'Checking the House register…',
-  demo: 'Demo codes: MM-114-Δ (active) · MM-207-Σ (lapsed) · anything else (no record)',
+  checking: 'Consulting the House register',
 };
 
 // Letters people can actually type, mapped to the Greek suffixes the House uses

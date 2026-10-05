@@ -4,17 +4,24 @@ import { VERIFY_COPY, REGISTER, formatCode, isValidCode, isOffTrack } from '../.
 import './Verify.css';
 
 const EASE = [0.16, 1, 0.3, 1];
-const PRESS_MS = 1300;
+const LOOKUP_MS = 2100; // form leaves, the seal draws, then the answer arrives
 
+// each stage slides on from the right and leaves to the left
 const screen = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.35, ease: EASE } },
+  initial: { opacity: 0, x: 48 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.9, ease: EASE } },
+  exit: { opacity: 0, x: -48, transition: { duration: 0.45, ease: EASE } },
 };
 
-function Field({ label, value, mono }) {
+const DEMOS = [
+  { code: 'MM-114-Δ', note: 'active' },
+  { code: 'MM-207-Σ', note: 'lapsed' },
+  { code: 'MM-411-Δ', note: 'no record' },
+];
+
+function Field({ label, value, mono, i = 0 }) {
   return (
-    <div className="verify__field">
+    <div className="verify__field" style={{ '--i': i }}>
       <dt>{label}</dt>
       <dd className={mono ? 'is-mono' : undefined}>{value}</dd>
     </div>
@@ -24,8 +31,8 @@ function Field({ label, value, mono }) {
 function Custody({ steps }) {
   return (
     <ol className="verify__custody" aria-label="Chain of custody">
-      {steps.map((s) => (
-        <li key={s.when}>
+      {steps.map((s, i) => (
+        <li key={s.when} style={{ '--i': i + 3 }}>
           <span className="verify__when">{s.when}</span>
           <span className="verify__what">{s.what}</span>
           <span className="verify__detail">{s.detail}</span>
@@ -69,10 +76,11 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
     prevState.current = state;
     if (state === 'checking') return undefined;
     onResult?.(sectionRef.current);
+    // wait for the previous stage to slide out and this one to mount
     const t = setTimeout(() => {
       if (state === 'entry') inputRef.current?.focus({ preventScroll: true });
       else headingRef.current?.focus({ preventScroll: true });
-    }, 450);
+    }, 800);
     return () => clearTimeout(t);
   }, [state, onResult]);
 
@@ -93,7 +101,7 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
     timer.current = setTimeout(() => {
       const found = REGISTER[code];
       setState(found ? found.status : 'notfound');
-    }, PRESS_MS);
+    }, LOOKUP_MS);
   };
 
   const again = () => { setState('entry'); setShowHint(false); };
@@ -102,7 +110,7 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
         <section className="verify" id="verify" ref={sectionRef} aria-label="Verify a consignment">
           <div className="verify__stage" aria-live="polite" aria-busy={state === 'checking'}>
             <AnimatePresence mode="wait">
-              {(state === 'entry' || state === 'checking') && (
+              {state === 'entry' && (
                 <motion.form key="entry" className="verify__entry" onSubmit={onSubmit} noValidate {...screen}>
                   <p className="verify__eyebrow">{VERIFY_COPY.eyebrow}</p>
                   <h2 className="verify__title" id="verify-title">{VERIFY_COPY.title}</h2>
@@ -110,7 +118,7 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
 
                   <div className="verify__control">
                     <label className="verify__label" htmlFor="verify-code">{VERIFY_COPY.label}</label>
-                    <div className={`verify__input-wrap${state === 'checking' ? ' is-pressing' : ''}`}>
+                    <div className="verify__input-wrap">
                       <input
                         ref={inputRef}
                         id="verify-code"
@@ -124,14 +132,8 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
                         inputMode="text"
                         aria-describedby="verify-hint"
                         aria-invalid={showHint || undefined}
-                        disabled={state === 'checking'}
                       />
-                      {state === 'checking' && (
-                        <span className="verify__press" aria-hidden="true">
-                          <img src="/models/pillar.svg" alt="" />
-                          <span className="verify__ripple" />
-                        </span>
-                      )}
+                      <span className="verify__underline" aria-hidden="true" />
                     </div>
                     <p id="verify-hint" className={`verify__hint${showHint ? ' is-shown' : ''}`}>
                       <span className="verify__hint-icon" aria-hidden="true">i</span>
@@ -139,11 +141,39 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
                     </p>
                   </div>
 
-                  <button className="verify__submit" type="submit" disabled={state === 'checking'}>
-                    {state === 'checking' ? VERIFY_COPY.checking : VERIFY_COPY.submit}
+                  <button className="verify__submit" type="submit">
+                    {VERIFY_COPY.submit}
+                    <span className="verify__arrow" aria-hidden="true" />
                   </button>
-                  <p className="verify__demo">{VERIFY_COPY.demo}</p>
+                  <div className="verify__demo">
+                    <span>Demo codes</span>
+                    {DEMOS.map((d) => (
+                      <button
+                        key={d.code}
+                        type="button"
+                        className="verify__chip"
+                        onClick={() => { setCode(d.code); setShowHint(false); inputRef.current?.focus(); }}
+                        aria-label={`Fill in ${d.code} (${d.note})`}
+                      >
+                        {d.code} <em>{d.note}</em>
+                      </button>
+                    ))}
+                  </div>
                 </motion.form>
+              )}
+
+              {state === 'checking' && (
+                <motion.div key="checking" className="verify__checking" {...screen} role="status">
+                  <span className="verify__seal-ring" aria-hidden="true">
+                    <svg viewBox="0 0 120 120">
+                      <circle className="verify__ring-track" cx="60" cy="60" r="56" />
+                      <circle className="verify__ring-draw" cx="60" cy="60" r="56" />
+                    </svg>
+                    <img src="/models/pillar.svg" alt="" />
+                  </span>
+                  <p className="verify__checking-label">{VERIFY_COPY.checking}</p>
+                  <p className="verify__checking-code">{code}</p>
+                </motion.div>
               )}
 
               {state === 'active' && record && (
@@ -158,12 +188,12 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
                   <div className="verify__cert-body">
                     <div>
                       <dl className="verify__fields">
-                        <Field label="Consignment" value={code} mono />
-                        <Field label="Grade" value={record.grade} />
-                        <Field label="Purity" value={record.purity} mono />
-                        <Field label="Mass" value={record.mass} mono />
-                        <Field label="Sealed" value={record.sealed} mono />
-                        <Field label="Reference" value={record.reference} mono />
+                        <Field label="Consignment" value={code} mono i={0} />
+                        <Field label="Grade" value={record.grade} i={1} />
+                        <Field label="Purity" value={record.purity} mono i={2} />
+                        <Field label="Mass" value={record.mass} mono i={3} />
+                        <Field label="Sealed" value={record.sealed} mono i={4} />
+                        <Field label="Reference" value={record.reference} mono i={5} />
                       </dl>
                       <p className="verify__status is-active">
                         <span className="verify__diamond" aria-hidden="true" />
@@ -195,10 +225,10 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
                   <div className="verify__cert-body">
                     <div>
                       <dl className="verify__fields">
-                        <Field label="Consignment" value={code} mono />
-                        <Field label="Grade" value={record.grade} />
-                        <Field label="Purity at sealing" value={record.purity} mono />
-                        <Field label="Sealed" value={record.sealed} mono />
+                        <Field label="Consignment" value={code} mono i={0} />
+                        <Field label="Grade" value={record.grade} i={1} />
+                        <Field label="Purity at sealing" value={record.purity} mono i={2} />
+                        <Field label="Sealed" value={record.sealed} mono i={3} />
                       </dl>
                       <p className="verify__status is-lapsed">
                         <span className="verify__diamond" aria-hidden="true" />
