@@ -1,6 +1,6 @@
 // Scroll-driven values shared by the WebGL scene and the DOM.
 // Everything is a 0..1 progress so timing lives in one place.
-// Page layout (in viewport heights): Arrival 0–1, Arrakis 1–4.2, Melange 4.2–7.2, Gallery 7.2–13.5 (holds 7.2–8.0, then pans over 4.5), Arrival 13.5–16.1.
+// Page layout (in viewport heights): Arrival 0–1, Arrakis 1–4.2, Melange 4.2–7.2, Gallery 7.2–13.5 (holds 7.2–8.0, then pans over 4.5), Arrival 13.5–16.1, then Allocation (its sheet unrolls over the first 1.1, measured from the DOM in App) and Verify.
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 // half linear, half smoothstep: soft ends without rushing the middle (peak speed 1.25×)

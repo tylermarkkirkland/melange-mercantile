@@ -1,0 +1,201 @@
+/* Seal lab: the parchment fills the window; the seal sits where it does on the
+   letter (right of the signature, low on the sheet) or in the centre. */
+.alloc.lab {
+  height: 100vh;
+  overflow: hidden;
+  --unroll: 1;
+}
+
+.lab__paper {
+  top: 0;
+  display: block;
+}
+
+.lab__spot {
+  position: absolute;
+  width: 180px;
+  height: 124px;
+  transform: translate(-50%, -50%);
+}
+
+/* matches the seal's place on the letter at 1440 × 900: 260px right of centre, low on the sheet */
+.lab__spot.is-letter { left: calc(50% + 260px); top: 78.5%; }
+.lab__spot.is-centre { left: 50%; top: 50%; }
+
+.lab__sign {
+  position: absolute;
+  left: calc(50% - 430px);
+  top: calc(78.5% - 62px);
+}
+
+.lab__sign.is-hidden { visibility: hidden; }
+
+.lab__signature {
+  display: block;
+  border-bottom: 1px solid var(--rule);
+  font-size: 40px;
+  line-height: 56px;
+  height: 56px;
+}
+
+/* the controls are a workbench, not part of the design: plain and out of the way */
+.lab__panel {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  top: 24px; /* at the top: the seal sits low, and the stamp enters well below this */
+  z-index: 5;
+  padding: 16px 20px 12px;
+  background: rgba(7, 10, 12, 0.88);
+  border-radius: 8px;
+  color: #cfcfd1;
+  font: 400 14px/1.4 var(--font-sans);
+}
+
+.lab__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+.lab__panel button {
+  min-height: 36px;
+  padding: 0 14px;
+  background: none;
+  border: 1px solid #5b5b5c;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lab__panel button:hover { border-color: #aeafb1; }
+
+.lab__play {
+  min-width: 132px;
+  background: #cfcfd1 !important;
+  color: #070a0c !important;
+  font-weight: 500 !important;
+}
+
+.lab__seg { display: inline-flex; }
+.lab__seg button { border-radius: 0; margin-left: -1px; }
+.lab__seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.lab__seg button:last-child { border-radius: 0 4px 4px 0; }
+.lab__seg button.is-on { background: #1e2b33; border-color: #aeafb1; }
+
+.lab__check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+
+.lab__panel kbd {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid #5b5b5c;
+  border-radius: 3px;
+  font: 400 11px/1.3 var(--font-mono);
+  color: #98999b;
+}
+
+.lab__timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.lab__timeline input[type='range'] { width: 100%; accent-color: #cfcfd1; }
+
+.lab__phases {
+  position: relative;
+  grid-column: 1;
+  height: 28px;
+}
+
+.lab__phases button {
+  position: absolute;
+  top: 0;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  transform: translateX(-2px);
+  border-color: transparent !important;
+  border-left: 1px solid #5b5b5c !important;
+  border-radius: 0 !important;
+  font-size: 12px !important;
+  color: #98999b !important;
+}
+
+.lab__time {
+  grid-column: 2;
+  grid-row: 1;
+  font: 400 13px/1 var(--font-mono);
+  color: #aeafb1;
+}
+
+.lab__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #858789;
+}
+
+/* the Silver panel: down the right side, clear of the seal */
+.lab__silver {
+  position: fixed;
+  top: 196px;
+  right: 24px;
+  bottom: 24px;
+  z-index: 5;
+  width: 300px;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  background: rgba(7, 10, 12, 0.88);
+  border-radius: 8px;
+  color: #cfcfd1;
+  font: 400 13px/1.4 var(--font-sans);
+}
+
+.lab__silver-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.lab__silver h2 { margin: 0; font: 500 15px/1.2 var(--font-sans); }
+.lab__silver-head span { font-size: 12px; color: #858789; }
+
+.lab__silver h3 {
+  margin: 18px 0 6px;
+  font: 500 11px/1.2 var(--font-sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #858789;
+}
+
+.lab__slider { display: block; margin: 10px 0 0; }
+.lab__slider-top { display: flex; justify-content: space-between; }
+.lab__slider output { font: 400 12px/1.4 var(--font-mono); color: #aeafb1; }
+.lab__slider.is-changed .lab__slider-top span::after { content: ' •'; color: #cfcfd1; }
+.lab__slider input { width: 100%; margin: 4px 0 0; accent-color: #cfcfd1; }
+.lab__slider-hint { display: block; font-size: 11px; color: #75797b; }
+
+.lab__silver-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.lab__silver button {
+  min-height: 36px;
+  padding: 0 12px;
+  background: none;
+  border: 1px solid #5b5b5c;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lab__silver button:first-child { background: #cfcfd1; color: #070a0c; border-color: #cfcfd1; font-weight: 500; }
+.lab__silver button:disabled { opacity: 0.4; cursor: default; }

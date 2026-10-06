@@ -48,7 +48,7 @@ function Custody({ steps }) {
  * result is a certificate (active), an advisory (lapsed) or a dignified
  * "no record" with a way forward.
  */
-const Verify = forwardRef(function Verify({ onResult }, ref) {
+const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref) {
   const [code, setCode] = useState('');
   const [state, setState] = useState('entry'); // entry | checking | active | lapsed | notfound
   const [showHint, setShowHint] = useState(false);
@@ -159,6 +159,9 @@ const Verify = forwardRef(function Verify({ onResult }, ref) {
                       </button>
                     ))}
                   </div>
+                  <button type="button" className="verify__link verify__no-code" onClick={onRequestAllocation}>
+                    {VERIFY_COPY.noCode}
+                  </button>
                 </motion.form>
               )}
 

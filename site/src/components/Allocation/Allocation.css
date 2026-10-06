@@ -1,0 +1,529 @@
+/* Allocation: a sheet of parchment unrolls left to right across the page as you
+   arrive (--unroll, 0 → 1, set by App), and the request is written on it by hand.
+   Everything on the sheet speaks the letter's language: Cinzel for the House's
+   heading and seal button, Cormorant for the printed words and labels, Pinyon
+   Script for the reader's own hand, and black ink throughout. */
+.alloc {
+  --parchment: #e4d5b2;
+  --ink: #070a0c; /* Void */
+  --ink-soft: rgba(7, 10, 12, 0.74); /* printed labels */
+  --rule: rgba(7, 10, 12, 0.45); /* ruled lines */
+  --hand: #121a1f; /* Basalt: the reader's own ink */
+  --paper-top: 112px;
+  --unroll-len: 110vh;
+
+  position: relative;
+  z-index: 2;
+  height: calc(100vh + var(--unroll-len) + 50vh);
+  background: rgba(4, 5, 6, 0.9);
+}
+
+.alloc .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* where the menu and Verify's link land: the sheet just fully open */
+.alloc__anchor {
+  position: absolute;
+  top: calc(var(--unroll-len) + 4vh);
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.alloc__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- the parchment ---------- */
+.alloc__paper {
+  --edge-top: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 14' preserveAspectRatio='none'><path d='M0 14 L0 4.9 L6 5.4 L11 3.4 L20 3.6 L29 3.3 L38 4.3 L43 5.6 L48 4.4 L57 5.5 L66 3.7 L72 6.8 L81 8.7 L90 6.5 L95 8.9 L100 6.3 L106 4.7 L112 6.2 L121 4.9 L132 4.1 L141 6.4 L147 5.2 L156 7.3 L165 3.4 L171 6 L180 5.6 L187 5.8 L195 5.2 L201 7.8 L212 7.7 L217 6.4 L226 6 L233 7.4 L240 4.9 L240 14 Z'/></svg>");
+  --edge-bottom: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 14' preserveAspectRatio='none'><path d='M0 0 L0 7.3 L5 10.3 L13 10 L20 10.1 L28 8.5 L39 10.5 L48 7.6 L55 9 L62 7.4 L71 6.2 L76 6 L83 8.2 L94 10.6 L105 6.8 L116 7.5 L127 6.1 L134 6.7 L145 8.9 L153 8.9 L162 10.3 L167 9.7 L174 10.2 L180 8.6 L188 10.5 L196 8.6 L203 5.7 L211 5.8 L218 6.8 L225 6.9 L233 5.3 L239 10.5 L240 7.3 L240 0 Z'/></svg>");
+
+  position: absolute;
+  top: var(--paper-top);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  background:
+    /* fibre */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.1  0 0 0 0.22 0'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>") 0 0 / 240px 240px,
+    /* age: slow, uneven blotches */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' preserveAspectRatio='none'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.0025 0.004' numOctaves='4' seed='11'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0 0.12  0 0 0 0.75 -0.22'/></filter><rect width='100%' height='100%' filter='url(%23b)'/></svg>") 0 0 / 100% 100% no-repeat,
+    /* light from the upper left, like the rest of the site */
+    radial-gradient(ellipse 70% 75% at 40% 35%, rgba(255, 248, 230, 0.5), transparent 70%),
+    var(--parchment);
+  /* edges darkened by handling */
+  box-shadow:
+    inset 0 0 160px rgba(110, 72, 28, 0.42),
+    inset 0 0 28px rgba(90, 58, 22, 0.35);
+  /* revealed only as far as the sheet has unrolled */
+  clip-path: inset(0 calc((1 - var(--unroll, 0)) * 100%) 0 0);
+  /* torn top and bottom edges */
+  -webkit-mask:
+    var(--edge-top) top left / 240px 14px repeat-x,
+    var(--edge-bottom) bottom left / 240px 14px repeat-x,
+    linear-gradient(#000, #000) center / 100% calc(100% - 26px) no-repeat;
+  mask:
+    var(--edge-top) top left / 240px 14px repeat-x,
+    var(--edge-bottom) bottom left / 240px 14px repeat-x,
+    linear-gradient(#000, #000) center / 100% calc(100% - 26px) no-repeat;
+}
+
+/* The roll: the same parchment wound on itself at the leading edge, thinning as
+   the sheet pays out, until it rolls off the right side of the page */
+.alloc__roll {
+  --d: calc(92px - var(--unroll, 0) * 54px);
+  position: absolute;
+  top: calc(var(--paper-top) - 4px);
+  bottom: -4px;
+  left: calc(var(--unroll, 0) * 100% - 2px);
+  width: var(--d);
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(80, 52, 20, 0.07) 6px 7px),
+    linear-gradient(90deg, #9c845c 0%, #cdb88f 16%, #e8dbbb 36%, #dccaa2 54%, #b49b70 76%, #7f6845 93%, #66523a 100%);
+  box-shadow: 16px 0 28px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* the roll's ends: the wound edge of the sheet, darker and slightly rounded */
+.alloc__roll::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(70, 45, 15, 0.55), transparent 10px),
+    linear-gradient(0deg, rgba(70, 45, 15, 0.55), transparent 10px);
+}
+
+/* a curl of shade on the parchment just behind the roll */
+.alloc__roll::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 100%;
+  width: 60px;
+  background: linear-gradient(90deg, transparent, rgba(80, 52, 20, 0.16));
+}
+
+/* ---------- the letter ---------- */
+.alloc__letter {
+  width: min(860px, 100% - 112px);
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.alloc__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ceremonial/heading: the House's letterhead */
+.alloc__title {
+  margin: 0;
+  font: 400 32px/40px var(--font-ceremonial);
+  letter-spacing: 0.15em;
+  text-align: center;
+  color: var(--ink);
+}
+
+/* a hairline with the House's diamond at its centre */
+.alloc__flourish {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 168px;
+}
+
+.alloc__flourish::before,
+.alloc__flourish::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.alloc__flourish i {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--ink);
+}
+
+/* The House's printed words: Cormorant italic */
+.alloc__salutation,
+.alloc__prose,
+.alloc__closing {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.alloc__salutation {
+  margin: 28px 0 0;
+  font-size: 28px;
+  line-height: 40px;
+}
+
+/* tall lines leave room for each blank's printed caption */
+.alloc__prose {
+  margin: 4px 0 0;
+  font-size: 28px;
+  line-height: 64px;
+}
+
+/* ---------- handwritten blanks ---------- */
+.alloc__blank {
+  position: relative;
+  display: inline-block;
+  line-height: 40px;
+  vertical-align: baseline;
+}
+
+.alloc__blank--destination { width: 7em; }
+.alloc__blank--email { width: 11em; }
+
+.alloc__hand {
+  width: 100%;
+  height: 44px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  font: 400 32px/40px 'Pinyon Script', cursive;
+  color: var(--hand);
+  caret-color: var(--hand);
+}
+
+.alloc__hand::placeholder {
+  color: var(--ink);
+  opacity: 0.28;
+}
+
+.alloc .alloc__hand:focus,
+.alloc .alloc__hand:focus-visible {
+  outline: none;
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink); /* the line thickens under the pen */
+}
+
+.alloc__hand[readonly] { cursor: default; }
+
+/* printed under the line like a form, in small capitals */
+.alloc__caption,
+.alloc__grade-note {
+  font: 500 16px/20px 'Cormorant SC', 'Cormorant Garamond', serif;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.alloc__caption {
+  position: absolute;
+  left: 4px;
+  top: calc(100% + 2px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* guidance takes the caption's place, written as a note in the margin: never red */
+.alloc__hint {
+  font: italic 500 18px/20px 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0;
+  color: var(--ink);
+  animation: hint-in 0.3s ease both;
+}
+
+.alloc__hint::before { content: '\2014\2002'; } /* an em dash, like a pencilled note */
+
+.alloc__blank.is-flagged .alloc__hand { border-bottom-color: var(--ink); }
+
+@keyframes hint-in { from { opacity: 0; transform: translateY(-3px); } }
+
+.alloc.is-sealing .alloc__caption,
+.alloc.is-received .alloc__caption,
+.alloc.is-register .alloc__caption { opacity: 0.5; }
+
+/* ---------- grades: a printed "circle one" line ---------- */
+.alloc__grades {
+  margin: 32px -24px 0; /* a little wider than the text column, so all four fit on one line */
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.alloc__grade-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  flex-wrap: nowrap;
+}
+
+.alloc__grade {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+/* a printed middle dot between the choices */
+.alloc__grade + .alloc__grade::before {
+  content: '·';
+  position: absolute;
+  left: -4px;
+  font: 500 28px/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink-soft);
+}
+
+.alloc__grade input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alloc__grade-name {
+  font: italic 500 25px/36px 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+}
+
+.alloc__purity {
+  font: 500 17px/20px 'Cormorant SC', 'Cormorant Garamond', serif;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.alloc__loop {
+  position: absolute;
+  top: 2px;
+  left: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% - 4px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.alloc__loop path {
+  fill: none;
+  stroke: var(--hand);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0; /* hidden outright, or the pen's round tip shows at the start */
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.alloc__grade.is-marked .alloc__loop path { stroke-dashoffset: 0; opacity: 1; }
+
+.alloc__grade:has(input:focus-visible) {
+  outline: 1px dashed var(--ink);
+  outline-offset: -2px;
+}
+
+.alloc__grades:disabled .alloc__grade { cursor: default; }
+
+.alloc__grade-note {
+  min-height: 20px;
+  margin: 4px 0 0;
+  text-align: center;
+}
+
+/* ---------- closing: signature on the left, the seal (and the send button) on the right ---------- */
+.alloc__close {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  align-items: start;
+  margin-top: 40px;
+}
+
+.alloc__closing {
+  margin: 0;
+  font-size: 28px;
+  line-height: 40px;
+}
+
+.alloc__blank--signature {
+  display: block;
+  width: 360px;
+  margin-top: 4px;
+}
+
+.alloc__blank--signature .alloc__hand {
+  height: 56px;
+  font-size: 40px;
+  line-height: 56px;
+}
+
+/* the postscript, written across the foot of the letter once it is sealed */
+.alloc__ps { grid-column: 1 / -1; margin-top: 20px; }
+.alloc__ps:empty { display: none; }
+
+.alloc__result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 32px;
+}
+
+/* the place the seal goes: level with the signature. The canvas is much larger
+   than the spot so the stamp can come down from well above; it never takes a click */
+.alloc__seal-spot {
+  position: relative;
+  height: 124px; /* the signature block's height, so the two sit level */
+  display: grid;
+  place-items: center;
+}
+
+.alloc__seal-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 480px;
+  height: 640px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ceremonial/label in a double-ruled cartouche: the one button on the sheet */
+.alloc__submit {
+  position: relative; /* above the seal's canvas */
+  min-height: 56px;
+  padding: 10px 36px;
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 3px var(--parchment), inset 0 0 0 4px var(--ink);
+  cursor: pointer;
+  font: 700 24px/32px var(--font-ceremonial);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  transition: background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.alloc__submit:hover {
+  background: var(--ink);
+  color: var(--parchment);
+  box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 4px var(--parchment);
+}
+
+/* the answer is written into the letter as a postscript */
+.alloc__sealing,
+.alloc__result-label {
+  margin: 0;
+  font: italic 500 24px/32px 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+}
+
+.alloc__sealing { padding-top: 12px; animation: sealing-breathe 1.6s ease-in-out infinite; }
+
+@keyframes sealing-breathe { 50% { opacity: 0.45; } }
+
+.alloc__result { animation: hint-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.alloc .alloc__result-label:focus,
+.alloc .alloc__result-label:focus-visible { outline: none; }
+
+.alloc__ref {
+  margin-left: 8px;
+  white-space: nowrap;
+  font: 500 17px/20px 'Cormorant SC', 'Cormorant Garamond', serif;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.alloc__result-body {
+  margin: 0;
+  font: 500 20px/30px 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+}
+
+.alloc__result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 28px;
+  margin: 0;
+}
+
+.alloc__link {
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: italic 500 20px/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.alloc :focus-visible {
+  outline: 1px dashed var(--ink);
+  outline-offset: 4px;
+}
+
+/* ---------- short or narrow screens: no pin, the sheet unrolls as it arrives
+   and the letter flows to its natural height ---------- */
+@media (max-width: 760px), (max-height: 699px) {
+  .alloc { --paper-top: 0px; height: auto; padding: 96px 0 64px; overflow-x: clip; }
+  .alloc__anchor { top: 96px; }
+  .alloc__frame { position: relative; height: auto; overflow: visible; }
+  .alloc__paper { position: relative; }
+  .alloc__roll { top: -4px; }
+}
+
+@media (max-width: 760px) {
+  .alloc__letter { width: calc(100% - 40px); padding: 48px 0 40px; }
+  .alloc__title { font-size: 24px; line-height: 32px; } /* Cinzel's 24px floor */
+  .alloc__salutation, .alloc__prose, .alloc__closing { font-size: 24px; }
+  .alloc__prose { line-height: 40px; }
+  .alloc__blank--destination,
+  .alloc__blank--email { display: block; width: 100%; margin: 4px 0 32px; }
+  .alloc__caption { white-space: normal; }
+  .alloc__stop { display: none; } /* punctuation alone at the start of a line reads as a stray mark */
+  .alloc__grade-row { flex-direction: column; align-items: center; flex-wrap: nowrap; }
+  .alloc__grade + .alloc__grade::before { display: none; }
+  .alloc__close { grid-template-columns: 1fr; }
+  .alloc__blank--signature { width: 100%; }
+  .alloc__seal-spot { grid-row: 2; height: 168px; margin-top: 40px; }
+  .alloc__submit { width: 100%; }
+  /* the postscript reads top to bottom: what happened, the reference, then the links */
+  .alloc__result { display: flex; flex-direction: column; }
+  .alloc__result-head { display: contents; }
+  .alloc__ref { display: block; margin: 0; }
+  .alloc__result-body { order: 1; margin-top: 4px; }
+  .alloc__result-actions { order: 2; flex-direction: column; align-items: flex-start; margin-top: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alloc__loop path { transition: none; }
+  .alloc__sealing,
+  .alloc__result,
+  .alloc__hint { animation: none; }
+}

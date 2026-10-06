@@ -8,6 +8,7 @@ import GallerySection from './components/GallerySection/GallerySection.jsx';
 import ArrivalSection from './components/ArrivalSection/ArrivalSection.jsx';
 import Menu from './components/Menu/Menu.jsx';
 import Verify from './components/Verify/Verify.jsx';
+import Allocation from './components/Allocation/Allocation.jsx';
 import { TIMELINE } from './data/intro.js';
 import { createIntroClock } from './lib/introClock.js';
 import { updateScrollState } from './lib/scrollState.js';
@@ -19,18 +20,36 @@ const phaseAt = (t) => {
   return 'dark';
 };
 
+// Where a reload should land: the spot this tab was at when it left, in viewport
+// heights so it survives a resize. Only a reload restores; a fresh visit starts at
+// the landing and plays the intro. Storage can be blocked, so every touch is guarded.
+const SCROLL_KEY = 'mm-scroll';
+const savedReloadSpot = () => {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (nav?.type !== 'reload') return 0;
+    const at = Number(sessionStorage.getItem(SCROLL_KEY));
+    return Number.isFinite(at) && at > 0.05 ? at : 0;
+  } catch {
+    return 0;
+  }
+};
+
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function App() {
   const reducedMotion = useMemo(prefersReducedMotion, []);
-  const clock = useMemo(() => createIntroClock({ settled: reducedMotion }), [reducedMotion]);
+  const reloadSpot = useMemo(savedReloadSpot, []);
+  // a reload mid-page skips the intro: it only makes sense from the top
+  const clock = useMemo(() => createIntroClock({ settled: reducedMotion || reloadSpot > 0 }), [reducedMotion, reloadSpot]);
   const [phase, setPhase] = useState(() => phaseAt(clock.now()));
   const [lenis, setLenis] = useState(null);
   const [arrakisActive, setArrakisActive] = useState(false);
   const [melangeActive, setMelangeActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const verifyRef = useRef(null);
+  const allocationRef = useRef(null);
   const menuButtonRef = useRef(null);
 
   // Follow the shared clock; only re-render when the phase actually changes
@@ -50,6 +69,11 @@ export default function App() {
     const root = document.documentElement;
     const instance = reducedMotion ? null : new Lenis({ lerp: 0.075, smoothWheel: true });
     let galleryWindows = null;
+    let allocation = null;
+    // Allocation's sheet unrolls while the section is pinned (wide, tall screens),
+    // or simply as it arrives when the section flows (phones, short windows);
+    // the same media query switches the pin in Allocation.css
+    const pinnedSheet = window.matchMedia('(min-width: 761px) and (min-height: 700px)');
     // true only while a gallery photo is physically passing behind the top bar logo
     const galleryOverLogo = () => {
       if (!galleryWindows) galleryWindows = document.querySelectorAll('.gallery__window');
@@ -68,6 +92,14 @@ export default function App() {
       root.style.setProperty('--gallery-in', s.galleryIn.toFixed(4));
       root.style.setProperty('--arrive', s.arrive.toFixed(4));
       root.style.setProperty('--arrive-copy', s.arriveCopy.toFixed(4));
+      if (!allocation) allocation = document.getElementById('allocation');
+      if (allocation) {
+        const vh = window.innerHeight;
+        const top = allocation.getBoundingClientRect().top;
+        const p = pinnedSheet.matches ? -top / (vh * 1.1) : (vh * 0.9 - top) / (vh * 0.7);
+        const x = Math.min(1, Math.max(0, p));
+        root.style.setProperty('--unroll', (x * x * (3 - 2 * x)).toFixed(4));
+      }
       // the docked logo appears as the 3D pillar finishes docking. It sits above
       // everything except the gallery's last photos, which slide up over it as the
       // row scrolls away
@@ -98,13 +130,15 @@ export default function App() {
     if (!lenis) return;
     if (settled) {
       lenis.start();
-      // ?s=1.5 jumps to 1.5 viewport-heights down (for reviewing frames)
+      // ?s=1.5 jumps to 1.5 viewport-heights down (for reviewing frames); otherwise
+      // a reload returns to where the page was
       const s = new URLSearchParams(window.location.search).get('s');
-      if (s) lenis.scrollTo(Number(s) * window.innerHeight, { immediate: true });
+      const at = s ? Number(s) : reloadSpot;
+      if (at) lenis.scrollTo(at * window.innerHeight, { immediate: true, force: true });
     } else {
       lenis.stop();
     }
-  }, [phase, lenis]);
+  }, [phase, lenis, reloadSpot]);
 
   // The page holds still while the menu is open
   useEffect(() => {
@@ -130,6 +164,13 @@ export default function App() {
     const v = verifyRef.current;
     scrollToEl(v?.section, { onComplete: () => v?.focusInput() });
   }, [scrollToEl]);
+  // Allocation sits just before Verify; the menu and Verify's "Don't have a code?" glide
+  // to the moment its sheet is fully unrolled, with the cursor in the first blank
+  const openAllocation = useCallback(() => {
+    setMenuOpen(false);
+    const a = allocationRef.current;
+    scrollToEl(a?.section, { onComplete: () => a?.focusInput() });
+  }, [scrollToEl]);
   // keep each Verify result in view as the section grows or shrinks
   const onVerifyResult = useCallback((el) => scrollToEl(el, { duration: 0.9 }), [scrollToEl]);
   // A shared #verify link lands there once, then clears itself so reloads start at the top
@@ -140,15 +181,29 @@ export default function App() {
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
   }, [phase, lenis]);
 
-  // Reloads always begin at the landing, so the intro plays from the top
+  // The browser's own scroll restoration is off: it fired while the intro still had
+  // the page locked and Lenis then settled somewhere else (the old jump to Verify).
+  // Instead the page starts at the top, and a reload is put back by the effect
+  // above once the page can scroll. The spot is saved as the tab leaves.
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
-  }, []);
+    // without Lenis (reduced motion) there's no intro to wait for, so restore right away
+    window.scrollTo(0, reducedMotion ? reloadSpot * window.innerHeight : 0);
+    const save = () => {
+      try {
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY / window.innerHeight));
+      } catch {
+        // storage blocked: reloads simply start at the landing
+      }
+    };
+    window.addEventListener('pagehide', save);
+    return () => window.removeEventListener('pagehide', save);
+  }, [reducedMotion, reloadSpot]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
     if (at === 'verify') { openVerify(); return; }
+    if (at === 'allocation') { openAllocation(); return; }
     setMenuOpen(false);
     const y = at * window.innerHeight;
     if (lenis) {
@@ -157,7 +212,7 @@ export default function App() {
     } else {
       window.scrollTo({ top: y, behavior: reducedMotion ? 'auto' : 'smooth' });
     }
-  }, [lenis, reducedMotion, openVerify]);
+  }, [lenis, reducedMotion, openVerify, openAllocation]);
 
   const skip = useCallback(() => {
     clock.skip();
@@ -199,7 +254,8 @@ export default function App() {
         <MelangeSection active={melangeActive} />
         <GallerySection />
         <ArrivalSection />
-        <Verify ref={verifyRef} onResult={onVerifyResult} />
+        <Allocation ref={allocationRef} />
+        <Verify ref={verifyRef} onResult={onVerifyResult} onRequestAllocation={openAllocation} />
       </div>
       <Menu open={menuOpen} onClose={closeMenu} onNavigate={navigate} returnFocusTo={menuButtonRef} />
     </>

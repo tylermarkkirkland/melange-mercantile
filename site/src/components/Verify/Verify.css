@@ -1,9 +1,9 @@
-/* The last chapter of the scroll: rises out of the dust after the arrival image */
+/* The last chapter of the scroll: continues the same dark ground as Allocation above it */
 .verify {
   position: relative;
   z-index: 2;
   min-height: 100vh;
-  background: linear-gradient(180deg, rgba(4, 5, 6, 0) 0%, rgba(4, 5, 6, 0.75) 22%, rgba(4, 5, 6, 0.9) 100%);
+  background: rgba(4, 5, 6, 0.9);
   color: var(--silver);
 }
 
@@ -214,6 +214,8 @@
 }
 
 .verify__chip:hover { border-color: var(--pewter); }
+
+.verify__no-code { margin-top: 30px; font-size: 15px; }
 
 /* the lookup gets its own moment: the pillar alone, a silver ring drawn once around it */
 .verify__checking {

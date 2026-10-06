@@ -9,6 +9,7 @@ export const VERIFY_COPY = {
   hint: 'Codes are MM, three digits and a Greek letter, like MM-114-Δ. You can type D for Δ.',
   submit: 'Verify',
   checking: 'Consulting the House register',
+  noCode: "Don't have a code? Request an allocation",
 };
 
 // Letters people can actually type, mapped to the Greek suffixes the House uses
