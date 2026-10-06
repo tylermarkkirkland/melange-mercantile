@@ -74,7 +74,7 @@ const motesFragment = /* glsl */ `
 // these are what the site uses, as Tyler tuned them in the lab (2026-10-06).
 export const SAND_DEFAULTS = {
   fill: 0.5, // how full the chamber is, at its axis (0 empty, 1 full)
-  repose: 16, // angle of repose, in degrees: the steepest slope the sand holds
+  repose: 25, // matches the pod's 25° lean on the site. Angle of repose, in degrees: the steepest slope the sand holds
   //              before it gives way (0 behaves like liquid, 90 is stuck to the glass)
   slump: 0.02, // how fast it slides once it gives way
   settleTo: 1, // how far a slump goes: the share of the repose angle it ends at
