@@ -1,10 +1,10 @@
 // Timeline for the arrival sequence, in milliseconds from first paint.
 // The scene and the UI both read from here so they stay in step.
 export const TIMELINE = {
-  darkHold: 900, // pure black before any light
-  sunRise: 4200, // how long the light takes to fully arrive
-  wordmark: 5600, // MELANGE / MERCANTILE begins to resolve
-  interface: 7600, // the rest of the UI fades in
+  darkHold: 350, // pure black before any light (a beat, not a wait)
+  sunRise: 3400, // how long the light takes to fully arrive
+  wordmark: 3600, // MELANGE / MERCANTILE begins to resolve, once the pillar is mostly lit
+  interface: 5600, // the rest of the UI fades in
 };
 
 // Jump straight to the settled state (skip button, reduced motion, ?t=final)

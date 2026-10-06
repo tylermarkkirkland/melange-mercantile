@@ -44,7 +44,7 @@ export default function LandingUI({ phase, onSkip, menuOpen, onMenu, menuButtonR
     <div className="landing">
       <motion.header className="landing__top" initial="hidden" animate={showInterface ? 'shown' : 'hidden'}>
         <motion.button
-          className="landing__menu"
+          className={`landing__menu${menuOpen ? ' is-open' : ''}`}
           type="button"
           ref={menuButtonRef}
           aria-expanded={menuOpen}

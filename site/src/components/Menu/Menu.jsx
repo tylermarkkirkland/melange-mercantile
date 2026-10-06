@@ -47,7 +47,7 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
     if (!open) return undefined;
     const panel = panelRef.current;
     const focusables = () => [...panel.querySelectorAll('button:not([disabled]), a[href]')];
-    const first = setTimeout(() => focusables()[1]?.focus(), 50);
+    const first = setTimeout(() => panel.querySelector('.menu__link')?.focus(), 50);
     const onKey = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); onClose(); }
       if (e.key !== 'Tab') return;
@@ -69,6 +69,9 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
   return (
     <AnimatePresence>
       {open && (
+        // The dialog itself never fades: only its panel does. The close icon sits
+        // outside the panel, fully visible throughout, so its two lines visibly
+        // cross into the X (and part again) instead of fading into it.
         <motion.div
           className="menu"
           id="site-menu"
@@ -76,11 +79,17 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
           aria-modal="true"
           aria-label="Menu"
           ref={panelRef}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.5, ease: EASE } }}
-          transition={{ duration: 0.7, ease: EASE }}
+          exit={{ opacity: 1, transition: { duration: 0.5 } }}
         >
+          <motion.div
+            className="menu__panel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.5, ease: EASE } }}
+            transition={{ duration: 0.7, ease: EASE }}
+          >
           {/* photographs behind the list, one per entry */}
           <div className="menu__backdrop" aria-hidden="true">
             {MENU.filter((m) => m.image).map((m) => (
@@ -92,11 +101,6 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
               />
             ))}
           </div>
-
-          <button className="menu__close" type="button" onClick={onClose}>
-            <MorphIcon reduced={reduced} />
-            <span>Close</span>
-          </button>
 
           <nav className="menu__nav" aria-label="Sections">
             <ol className="menu__list" onMouseLeave={() => setActive(null)}>
@@ -125,6 +129,19 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
           </nav>
 
           <p className="menu__footer">Spice · Trade · Influence</p>
+          </motion.div>
+
+          <button className="menu__close" type="button" onClick={onClose}>
+            <MorphIcon reduced={reduced} />
+            {/* the word crossfades with the page's "Menu" underneath */}
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { duration: 0.4, delay: 0.1, ease: EASE } }}
+              exit={{ opacity: 0, transition: { duration: 0.3, ease: EASE } }}
+            >
+              Close
+            </motion.span>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

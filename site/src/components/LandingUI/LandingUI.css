@@ -74,6 +74,16 @@
   border-bottom: 1px solid var(--chrome);
 }
 
+/* While the menu is open its own icon, drawn in exactly this spot, does the
+   morphing. This one steps aside the instant it opens and steps back the instant
+   the menu's lines have parted again (0.5s), so only one set of lines is seen. */
+.landing__menu-icon { transition: opacity 0s linear 0.5s; }
+.landing__menu.is-open .landing__menu-icon { opacity: 0; transition: none; }
+
+/* the words crossfade: "Menu" out, the menu's "Close" in, and back */
+.landing__menu-label { transition: opacity 0.4s ease 0.15s; }
+.landing__menu.is-open .landing__menu-label { opacity: 0; transition: opacity 0.3s ease; }
+
 /* Words and statement leave as the pillar docks (--dock runs 0 → 1 on scroll) */
 .landing__fades {
   position: absolute;
@@ -186,12 +196,12 @@
   box-shadow: 0 0 6px rgba(207, 207, 209, 0.5);
   top: -22px;
   /* a bead of light runs down the line, rests, and runs again: it points the way */
-  animation: cue-travel 3s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: cue-travel 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite; /* 1.8s down, 0.8s rest */
 }
 
 @keyframes cue-travel {
   0% { top: -22px; }
-  60%, 100% { top: 56px; }
+  69%, 100% { top: 56px; }
 }
 
 .landing__skip {

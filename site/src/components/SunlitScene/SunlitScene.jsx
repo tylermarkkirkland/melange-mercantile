@@ -29,7 +29,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const sunAt = (t) => easeInOutCubic(clamp01((t - TIMELINE.darkHold) / TIMELINE.sunRise));
 
 // The light reaches the pillar a beat after it fills the air
-const MARK_LAG = 1400;
+const MARK_LAG = 900;
 const markLightAt = (t) => Math.pow(sunAt(t - MARK_LAG), 1.6);
 
 /**
