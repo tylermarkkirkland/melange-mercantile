@@ -4,8 +4,9 @@ import { MELANGE } from '../../data/intro.js';
 import './MelangeSection.css';
 
 /**
- * The Melange: the vial (drawn in the WebGL scene) holds the centre;
- * the statement sits left and the consignment record rolls in on the right.
+ * The Melange: the capsule (drawn in the WebGL scene) holds the centre; what
+ * melange is sits left, and on the right a single specimen label names the grade
+ * the capsule holds, handing off to The Reserve.
  */
 export default function MelangeSection({ active }) {
   return (
@@ -24,17 +25,12 @@ export default function MelangeSection({ active }) {
         </div>
 
         <div className="melange__record">
-          <p className="melange__reference">{MELANGE.reference}</p>
-          <dl className="melange__figures">
-            {MELANGE.figures.map((f, i) => (
-              <div key={f.label} className="melange__figure">
-                <dt className="melange__figure-label">{f.label}</dt>
-                <dd className="melange__figure-value">
-                  <RollingNumber value={f.value} suffix={f.suffix} active={active} delay={150 + i * 160} />
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <p className="melange__reference">{MELANGE.specimen.label}</p>
+          <p className="melange__figure-value">
+            <RollingNumber value={MELANGE.specimen.purity} suffix="%" active={active} delay={150} />
+          </p>
+          <p className="melange__grade">{MELANGE.specimen.grade}</p>
+          <p className="melange__figure-label">{MELANGE.specimen.basin}</p>
         </div>
       </div>
     </section>

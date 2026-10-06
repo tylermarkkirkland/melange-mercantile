@@ -8,7 +8,7 @@ import './ArrivalSection.css';
  */
 export default function ArrivalSection() {
   return (
-    <section className="arrival" id="influence" aria-labelledby="arrival-title">
+    <section className="arrival" id="discretion" aria-labelledby="arrival-title">
       <div className="arrival__frame">
         <div className="arrival__window">
           <img className="arrival__image" src={ARRIVAL.src} alt={ARRIVAL.alt} loading="lazy" decoding="async" />
@@ -19,6 +19,7 @@ export default function ArrivalSection() {
             {ARRIVAL.headline.map((line) => <span key={line}>{line}</span>)}
           </h2>
           <p className="arrival__body">{ARRIVAL.body}</p>
+          <p className="arrival__record">{ARRIVAL.record}</p>
         </div>
       </div>
     </section>

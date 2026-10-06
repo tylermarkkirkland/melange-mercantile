@@ -1,22 +1,18 @@
-// Request an allocation: the House has no "Buy Now". A sheet unrolls across the
+// Request an allocation: Melange Mercantile has no "Buy Now". A sheet unrolls across the
 // page, you write your request by hand, and it is sealed in wax.
 
 export const ALLOCATION_COPY = {
   eyebrow: 'Allocation',
   title: 'REQUEST AN ALLOCATION',
-  salutation: 'To the House of Melange Mercantile,',
+  salutation: 'To the Factors of Melange Mercantile,',
   closing: 'Yours in trade,',
   submit: 'Seal and send',
   sealing: 'Sealing your letter…',
   gradeLegend: 'Circle one grade',
 };
 
-export const GRADES = [
-  { name: 'Imperial Reserve', purity: '99.4%', warrant: true },
-  { name: 'House Select', purity: '97.1%' },
-  { name: 'Guild Standard', purity: '94.8%' },
-  { name: 'Raw Harvest', purity: '88.2%' },
-];
+// the grades themselves live in data/reserve.js
+export { GRADES } from './reserve.js';
 
 // Each handwritten blank. `caption` is printed under the line like a form;
 // `hint` replaces it when the blank needs attention (guidance, never scolding).
@@ -27,7 +23,7 @@ export const FIELDS = {
     hint: 'Add where it should be delivered',
   },
   email: {
-    caption: 'Where the House may reply',
+    caption: 'Where your reply should go',
     placeholder: 'steward@atreides.house',
     hint: 'Add an address with an @ in it',
   },
@@ -46,18 +42,18 @@ export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 // A believable reference number for the reply
 export const makeReference = () => `MM-REQ-${String(Math.floor(1000 + Math.random() * 8999))}`;
 
-// The two answers, written onto the letter under the seal. Imperial Reserve is
-// warrant-only, so without one the request is entered on the register instead:
-// a waiting place, not a refusal.
+// The two answers, written onto the letter as a postscript. Imperial Reserve is
+// for warrant holders only, so without one the request joins the waiting
+// register instead: a waiting place, not a refusal.
 export const RESULTS = {
   received: {
     label: 'Sealed and sent.',
-    body: (r) => `A steward will review your request for ${r.grade} and reply to ${r.email} within seven days.`,
+    body: (r) => `A factor of Melange Mercantile will review your request for ${r.grade} and reply to ${r.email} within seven days.`,
   },
   register: {
-    label: 'Entered on the register.',
+    label: 'Entered on the waiting register.',
     body: (r) =>
-      `Imperial Reserve is granted by warrant only, so ${r.name} is now on the Imperial register. The House will write to ${r.email} when an allocation opens.`,
+      `Imperial Reserve is allocated only to warrant holders, so ${r.name} is now on the waiting register. Melange Mercantile will write to ${r.email} when an allocation opens.`,
     offer: 'Request House Select instead',
   },
 };

@@ -5,7 +5,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // The sealing moment, in real light: a bead of black wax lands on the letter and
 // spreads into a pool, a silver stamp comes down from above, is pressed hard and
-// rocked, and lifts away leaving the House pillar raised in the wax, caught with
+// rocked, and lifts away leaving the pillar raised in the wax, caught with
 // silver where the stamp had been dusted. The paper is the XY plane, seen straight on, so the
 // stamp travels along z toward and away from the reader.
 
@@ -377,6 +377,7 @@ export function createSealPress(canvas, { reducedMotion = false } = {}) {
       scene.environment?.dispose();
       pmrem.dispose();
       renderer.dispose();
+      renderer.forceContextLoss(); // free the WebGL context now, so the page's main scene keeps its own
     },
   };
 }

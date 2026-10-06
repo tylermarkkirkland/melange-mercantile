@@ -184,8 +184,8 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                   <header className="verify__cert-head">
                     <img className="verify__seal" src="/models/pillar.svg" alt="" aria-hidden="true" />
                     <div>
-                      <h2 id="verify-result" ref={headingRef} tabIndex={-1} className="verify__result-title">CERTIFIED RESERVE</h2>
-                      <p className="verify__eyebrow">House register · {record.basin}</p>
+                      <h2 id="verify-result" ref={headingRef} tabIndex={-1} className="verify__result-title">CERTIFIED CONSIGNMENT</h2>
+                      <p className="verify__eyebrow">Melange Mercantile ledger · {record.basin}</p>
                     </div>
                   </header>
                   <div className="verify__cert-body">
@@ -200,7 +200,7 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                       </dl>
                       <p className="verify__status is-active">
                         <span className="verify__diamond" aria-hidden="true" />
-                        Warrant active
+                        Guarantee active
                       </p>
                     </div>
                     <Custody steps={record.custody} />
@@ -218,12 +218,12 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                     <img className="verify__seal" src="/models/pillar.svg" alt="" aria-hidden="true" />
                     <div>
                       <h2 id="verify-result" ref={headingRef} tabIndex={-1} className="verify__result-title">RECORD FOUND</h2>
-                      <p className="verify__eyebrow">House register · {record.basin}</p>
+                      <p className="verify__eyebrow">Melange Mercantile ledger · {record.basin}</p>
                     </div>
                   </header>
                   <p className="verify__advisory">
-                    This consignment is genuine and was sealed by the House. Its warrant lapsed on {record.lapsedOn},
-                    so the House no longer guarantees its condition. Nothing is wrong with the record itself.
+                    This consignment is genuine and was sealed by Melange Mercantile. Its guarantee lapsed on {record.lapsedOn},
+                    so we no longer vouch for its condition. Nothing is wrong with the record itself.
                   </p>
                   <div className="verify__cert-body">
                     <div>
@@ -235,13 +235,13 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                       </dl>
                       <p className="verify__status is-lapsed">
                         <span className="verify__diamond" aria-hidden="true" />
-                        Warrant lapsed · {record.lapsedOn}
+                        Guarantee lapsed · {record.lapsedOn}
                       </p>
                     </div>
                     <Custody steps={record.custody} />
                   </div>
                   <div className="verify__actions">
-                    <a className="verify__button" href="mailto:register@melange.house?subject=Re-sealing%20request">Ask the House to re-seal</a>
+                    <a className="verify__button" href="mailto:ledger@melangemercantile.com?subject=Request%20for%20a%20fresh%20assay">Request a fresh assay</a>
                     <button type="button" className="verify__link" onClick={again}>Verify another code</button>
                   </div>
                 </motion.article>
@@ -252,8 +252,8 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                   <img className="verify__mark-dim" src="/models/pillar.svg" alt="" aria-hidden="true" />
                   <h2 ref={headingRef} tabIndex={-1} className="verify__result-title">NO RECORD FOUND</h2>
                   <p className="verify__intro">
-                    This code isn't in the House register. It may have been mistyped, or the consignment
-                    wasn't sealed by Melange Mercantile.
+                    This code isn't in the Melange Mercantile ledger. It may have been mistyped, or the
+                    consignment wasn't sealed by us.
                   </p>
                   <div className="verify__echo">
                     <span className="verify__label">You searched</span>
@@ -261,7 +261,7 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
                   </div>
                   <div className="verify__actions is-centered">
                     <button type="button" className="verify__button is-primary" onClick={again}>Check the code again</button>
-                    <a className="verify__button" href="mailto:register@melange.house?subject=Unrecognised%20consignment">Contact the House</a>
+                    <a className="verify__button" href="mailto:ledger@melangemercantile.com?subject=Unrecognised%20consignment">Contact Melange Mercantile</a>
                   </div>
                 </motion.div>
               )}

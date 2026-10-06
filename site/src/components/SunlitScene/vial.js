@@ -67,7 +67,7 @@ const GUN = '#2b2f33';
 /**
  * Machined panel detailing for the cap bands, drawn once to a canvas: a colour
  * map and a bump map. With `logo`, a smooth plate is set into the panels and the
- * House pillar is inlaid in polished silver (recessed in the bump map).
+ * Melange Mercantile pillar is inlaid in polished silver (recessed in the bump map).
  */
 function makePanelTextures(seed, logo) {
   const W = 2048;
@@ -203,7 +203,7 @@ function makeDropletTexture() {
 /**
  * A containment capsule of melange: a wide glass chamber between two heavy
  * machined caps with panel detailing, a lamp in the top cap lighting a bed of
- * spice and grains suspended in the air. The House pillar is inlaid in the top cap.
+ * spice and grains suspended in the air. The Melange Mercantile pillar is inlaid in the top cap.
  */
 export function createVial(renderer) {
   const group = new THREE.Group(); // whole assembly; tilts toward the cursor

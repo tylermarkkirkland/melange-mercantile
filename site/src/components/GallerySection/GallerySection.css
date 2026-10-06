@@ -4,7 +4,7 @@
  */
 .gallery {
   position: relative;
-  height: 630vh; /* 80vh of hold before the pan, then 450vh of pan */
+  height: 590vh; /* 40vh of hold before the pan, then 450vh of pan */
 }
 
 .gallery__frame {

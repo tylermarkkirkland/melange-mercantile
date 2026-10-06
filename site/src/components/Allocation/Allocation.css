@@ -1,6 +1,6 @@
 /* Allocation: a sheet of parchment unrolls left to right across the page as you
    arrive (--unroll, 0 → 1, set by App), and the request is written on it by hand.
-   Everything on the sheet speaks the letter's language: Cinzel for the House's
+   Everything on the sheet speaks the letter's language: Cinzel for Melange Mercantile's
    heading and seal button, Cormorant for the printed words and labels, Pinyon
    Script for the reader's own hand, and black ink throughout. */
 .alloc {
@@ -136,7 +136,7 @@
   gap: 14px;
 }
 
-/* ceremonial/heading: the House's letterhead */
+/* ceremonial/heading: Melange Mercantile's letterhead */
 .alloc__title {
   margin: 0;
   font: 400 32px/40px var(--font-ceremonial);
@@ -145,7 +145,7 @@
   color: var(--ink);
 }
 
-/* a hairline with the House's diamond at its centre */
+/* a hairline with the pillar's diamond at its centre */
 .alloc__flourish {
   display: flex;
   align-items: center;
@@ -168,7 +168,7 @@
   background: var(--ink);
 }
 
-/* The House's printed words: Cormorant italic */
+/* Melange Mercantile's printed words: Cormorant italic */
 .alloc__salutation,
 .alloc__prose,
 .alloc__closing {

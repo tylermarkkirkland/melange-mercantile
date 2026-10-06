@@ -3,13 +3,13 @@ import { GALLERY } from '../../data/intro.js';
 import './GallerySection.css';
 
 /**
- * Across the Imperium: a pinned frame where vertical scroll pans a row of
+ * The Passage: a pinned frame where vertical scroll pans a row of
  * photographs sideways. Each photo drifts slightly inside its frame (parallax).
  * Progress comes from the --gallery CSS variable (0 → 1).
  */
 export default function GallerySection() {
   return (
-    <section className="gallery" id="imperium" aria-labelledby="gallery-title">
+    <section className="gallery" id="passage" aria-labelledby="gallery-title">
       <div className="gallery__frame">
         <div className="gallery__track">
           <div className="gallery__intro">

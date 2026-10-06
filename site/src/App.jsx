@@ -4,6 +4,7 @@ import SunlitScene from './components/SunlitScene/SunlitScene.jsx';
 import LandingUI from './components/LandingUI/LandingUI.jsx';
 import ArrakisSection from './components/ArrakisSection/ArrakisSection.jsx';
 import MelangeSection from './components/MelangeSection/MelangeSection.jsx';
+import ReserveSection from './components/ReserveSection/ReserveSection.jsx';
 import GallerySection from './components/GallerySection/GallerySection.jsx';
 import ArrivalSection from './components/ArrivalSection/ArrivalSection.jsx';
 import Menu from './components/Menu/Menu.jsx';
@@ -105,7 +106,7 @@ export default function App() {
       // row scrolls away
       const docked = Math.min(1, Math.max(0, (s.dock - 0.95) / 0.05));
       root.style.setProperty('--mark-show', docked.toFixed(4));
-      root.classList.toggle('mark-under', s.y > window.innerHeight * 7 && galleryOverLogo());
+      root.classList.toggle('mark-under', s.y > window.innerHeight * 8.7 && galleryOverLogo());
       setArrakisActive((prev) => (prev ? s.copy > 0.2 : s.copy > 0.6));
       setMelangeActive((prev) => (prev ? s.vialCopy > 0.2 : s.vialCopy > 0.6));
     };
@@ -166,9 +167,11 @@ export default function App() {
   }, [scrollToEl]);
   // Allocation sits just before Verify; the menu and Verify's "Don't have a code?" glide
   // to the moment its sheet is fully unrolled, with the cursor in the first blank
-  const openAllocation = useCallback(() => {
+  // The Reserve's "Request" arrives with that grade already circled on the letter
+  const openAllocation = useCallback((grade) => {
     setMenuOpen(false);
     const a = allocationRef.current;
+    if (typeof grade === 'string') a?.circleGrade(grade);
     scrollToEl(a?.section, { onComplete: () => a?.focusInput() });
   }, [scrollToEl]);
   // keep each Verify result in view as the section grows or shrinks
@@ -252,6 +255,7 @@ export default function App() {
         <section className="track__arrival" id="arrival" aria-label="Arrival" />
         <ArrakisSection active={arrakisActive} />
         <MelangeSection active={melangeActive} />
+        <ReserveSection onRequest={openAllocation} />
         <GallerySection />
         <ArrivalSection />
         <Allocation ref={allocationRef} />

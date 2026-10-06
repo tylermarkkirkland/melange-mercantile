@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -42,6 +42,9 @@ export default function SunlitScene({ clock, reducedMotion }) {
   // a live copy so the ?controls panel can tune the light without a reload
   const light = useRef({ ...LIGHTING }).current;
 
+  // Bumped when the browser restores a lost WebGL context, to rebuild the scene
+  const [generation, setGeneration] = useState(0);
+
   useEffect(() => {
     const mount = mountRef.current;
     const isSmall = window.innerWidth < 768;
@@ -54,6 +57,14 @@ export default function SunlitScene({ clock, reducedMotion }) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.92;
     mount.appendChild(renderer.domElement);
+
+    // A browser keeps only so many WebGL contexts per page and drops the oldest
+    // when it runs out, which froze the pillar mid-screen. If that happens, ask for
+    // the context back and rebuild the whole scene when it returns.
+    const onLost = (e) => e.preventDefault();
+    const onRestored = () => setGeneration((g) => g + 1);
+    renderer.domElement.addEventListener('webglcontextlost', onLost);
+    renderer.domElement.addEventListener('webglcontextrestored', onRestored);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(FOV, mount.clientWidth / mount.clientHeight, 0.1, 100);
@@ -386,10 +397,13 @@ export default function SunlitScene({ clock, reducedMotion }) {
       raysFront.material.dispose();
       pmrem.dispose();
       composer.dispose();
+      renderer.domElement.removeEventListener('webglcontextlost', onLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', onRestored);
       renderer.dispose();
+      renderer.forceContextLoss(); // free the context now rather than whenever the browser collects it
       mount.removeChild(renderer.domElement);
     };
-  }, [clock, reducedMotion]);
+  }, [clock, reducedMotion, generation]);
 
   return <div className="sunlit-scene" ref={mountRef} aria-hidden="true" />;
 }

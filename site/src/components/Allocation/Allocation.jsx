@@ -43,9 +43,9 @@ const LOOP = 'M 12 34 C 8 14, 60 4, 118 6 C 176 8, 214 18, 210 38 C 206 60, 150 
 
 /**
  * Request an allocation. As the section arrives a sheet unrolls across the page
- * (scroll drives --unroll from App). The request is a letter: printed in the
- * House's hand, filled in by yours. Sending pools rust wax at the signature and
- * a silver stamp presses the House pillar into it.
+ * (scroll drives --unroll from App). The request is a letter: Melange Mercantile's
+ * printed form, filled in in your own hand. Sending pools black wax beside the
+ * signature and a silver stamp presses the pillar into it.
  */
 const Allocation = forwardRef(function Allocation(props, ref) {
   const reduced = useReducedMotion();
@@ -60,21 +60,39 @@ const Allocation = forwardRef(function Allocation(props, ref) {
   const resultRef = useRef(null);
   const fieldRefs = useRef({});
 
-  // the page scrolls to the anchor (the moment the sheet is fully open), not the section top
+  // the page scrolls to the anchor (the moment the sheet is fully open), not the section top.
+  // The Reserve can arrive with a grade already circled, on a fresh letter.
   useImperativeHandle(ref, () => ({
     section: anchorRef.current,
     focusInput: () => fieldRefs.current.destination?.focus({ preventScroll: true }),
+    circleGrade: (name) => {
+      if (state !== 'letter') { pressRef.current?.reset(); setState('letter'); }
+      setValues((v) => ({ ...v, grade: name }));
+      setFlagged((f) => ({ ...f, grade: false }));
+    },
   }));
 
+  // The seal's 3D scene (its own WebGL context) is only built as the letter comes
+  // near, so the rest of the page runs on a single context
   useEffect(() => {
-    const press = createSealPress(canvasRef.current, { reducedMotion: prefersReducedMotion() });
-    pressRef.current = press;
-    if (import.meta.env.DEV) window.__sealPress = press; // poseAt(ms) for reviewing frames
-    const onResize = () => press.resize();
-    window.addEventListener('resize', onResize);
+    let press = null;
+    const onResize = () => press?.resize();
+    const build = () => {
+      if (press) return;
+      press = createSealPress(canvasRef.current, { reducedMotion: prefersReducedMotion() });
+      pressRef.current = press;
+      if (import.meta.env.DEV) window.__sealPress = press; // poseAt(ms) for reviewing frames
+      window.addEventListener('resize', onResize);
+    };
+    const near = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { build(); near.disconnect(); }
+    }, { rootMargin: '150% 0px' });
+    near.observe(sectionRef.current);
     return () => {
+      near.disconnect();
       window.removeEventListener('resize', onResize);
-      press.dispose();
+      press?.dispose();
+      pressRef.current = null;
     };
   }, []);
 
@@ -149,7 +167,7 @@ const Allocation = forwardRef(function Allocation(props, ref) {
             <p className="alloc__prose">
               I request an allocation of the grade circled below, to be delivered to{' '}
               <Blank name="destination" flagged={flagged.destination} inputProps={hand('destination')} />
-              <span className="alloc__stop">,</span> with the House&rsquo;s reply sent to{' '}
+              <span className="alloc__stop">,</span> with your reply sent to{' '}
               <Blank name="email" flagged={flagged.email} inputProps={{ ...hand('email'), type: 'email', inputMode: 'email' }} />
               <span className="alloc__stop">.</span>
             </p>
@@ -168,7 +186,7 @@ const Allocation = forwardRef(function Allocation(props, ref) {
                       onChange={() => update('grade', g.name)}
                     />
                     <span className="alloc__grade-name">{g.name}</span>
-                    <span className="alloc__purity">{g.purity}</span>
+                    <span className="alloc__purity">{g.purity}%</span>
                     <svg className="alloc__loop" viewBox="0 0 220 76" preserveAspectRatio="none" aria-hidden="true">
                       <path d={LOOP} pathLength="1" />
                     </svg>
@@ -179,7 +197,7 @@ const Allocation = forwardRef(function Allocation(props, ref) {
                 {flagged.grade ? (
                   <span className="alloc__hint">{FIELDS.grade.hint}</span>
                 ) : grade?.warrant && !locked ? (
-                  <span className="alloc__hint">Imperial Reserve is granted by warrant only. Without one, your request joins the register.</span>
+                  <span className="alloc__hint">Imperial Reserve is allocated only to Houses holding a Melange Mercantile warrant. Without one, your request joins the waiting register.</span>
                 ) : (
                   ALLOCATION_COPY.gradeLegend
                 )}

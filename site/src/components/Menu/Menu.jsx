@@ -1,9 +1,36 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { MENU } from '../../data/intro.js';
 import './Menu.css';
 
 const EASE = [0.16, 1, 0.3, 1];
+
+/**
+ * The menu button's two lines, drawn where the page's own Menu icon sits. On
+ * open they slide together and cross into an X; on close they uncross and part
+ * back into two lines, handing over to the page's icon underneath.
+ */
+function MorphIcon({ reduced }) {
+  const bar = (side) => ({
+    initial: { y: side * 3, rotate: 0 },
+    animate: {
+      y: 0,
+      rotate: side * 32,
+      transition: reduced ? { duration: 0 } : { y: { duration: 0.22, ease: EASE }, rotate: { duration: 0.34, delay: 0.16, ease: EASE } },
+    },
+    exit: {
+      y: side * 3,
+      rotate: 0,
+      transition: reduced ? { duration: 0 } : { rotate: { duration: 0.24, ease: EASE }, y: { duration: 0.22, delay: 0.16, ease: EASE } },
+    },
+  });
+  return (
+    <span className="menu__close-icon" aria-hidden="true">
+      <motion.span className="menu__close-bar" {...bar(-1)} />
+      <motion.span className="menu__close-bar" {...bar(1)} />
+    </span>
+  );
+}
 
 /**
  * Full-screen menu. Hovering (or focusing) an entry fades its photograph in
@@ -11,6 +38,7 @@ const EASE = [0.16, 1, 0.3, 1];
  * Escape closes; focus stays inside while open and returns to the menu button.
  */
 export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
+  const reduced = useReducedMotion();
   const [active, setActive] = useState(null);
   const panelRef = useRef(null);
 
@@ -66,7 +94,7 @@ export default function Menu({ open, onClose, onNavigate, returnFocusTo }) {
           </div>
 
           <button className="menu__close" type="button" onClick={onClose}>
-            <span className="menu__close-icon" aria-hidden="true" />
+            <MorphIcon reduced={reduced} />
             <span>Close</span>
           </button>
 

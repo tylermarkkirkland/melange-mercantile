@@ -1,6 +1,8 @@
 // Scroll-driven values shared by the WebGL scene and the DOM.
 // Everything is a 0..1 progress so timing lives in one place.
-// Page layout (in viewport heights): Arrival 0–1, Arrakis 1–4.2, Melange 4.2–7.2, Gallery 7.2–13.5 (holds 7.2–8.0, then pans over 4.5), Arrival 13.5–16.1, then Allocation (its sheet unrolls over the first 1.1, measured from the DOM in App) and Verify.
+// Page layout (in viewport heights): Arrival 0–1, Arrakis 1–4.2, Melange 4.2–7.2, Reserve 7.2–8.9,
+// Passage (gallery) 8.9–14.8 (holds 8.9–9.3, then pans over 4.5), Discretion 14.8–17.4, then Allocation
+// (its sheet unrolls over the first 1.1, measured from the DOM in App) and Verify.
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 // half linear, half smoothstep: soft ends without rushing the middle (peak speed 1.25×)
@@ -17,7 +19,7 @@ export const scrollState = {
   vialSpin: 0, // the vial turns as you scroll through the section
   vialCopy: 0, // Melange copy and figures
   vialOut: 0, // the capsule sinks away as the gallery arrives
-  galleryIn: 0, // gallery title fades in
+  galleryIn: 0, // gallery title fades in (after The Reserve)
   gallery: 0, // the photo row pans sideways
   arrive: 0, // the arrival image opens to full bleed
   arriveCopy: 0, // its line settles in
@@ -35,10 +37,12 @@ export function updateScrollState(y, vh) {
   scrollState.vialSpin = at(3.8, 3.0);
   scrollState.vialCopy = at(4.5, 0.5);
   scrollState.vialOut = easeInOut(at(6.1, 0.8));
-  scrollState.galleryIn = at(6.6, 0.5);
-  // the gallery holds still for ~one screen of scroll, then pans with an eased start and finish
-  scrollState.gallery = easeSoft(at(8.0, 4.5));
-  scrollState.arrive = easeInOut(at(12.7, 1.4));
-  scrollState.arriveCopy = at(13.9, 0.6);
+  // The Reserve (7.2–8.9) sits between the capsule and the gallery; it is plain
+  // document flow, so nothing here drives it, but everything after it starts 1.7 later
+  scrollState.galleryIn = at(8.3, 0.5);
+  // the gallery holds still for a short beat, then pans with an eased start and finish
+  scrollState.gallery = easeSoft(at(9.3, 4.5));
+  scrollState.arrive = easeInOut(at(14.0, 1.4));
+  scrollState.arriveCopy = at(15.2, 0.6);
   return scrollState;
 }

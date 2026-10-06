@@ -67,19 +67,16 @@
   height: 14px;
 }
 
-.menu__close-icon::before,
-.menu__close-icon::after {
-  content: '';
+/* two lines exactly over the page's Menu icon (28px wide, 6px apart), which
+   cross into the X; the motion lives in Menu.jsx */
+.menu__close-bar {
   position: absolute;
-  left: 4px;
-  right: 4px;
-  top: 50%;
+  left: 0;
+  top: calc(50% - 0.5px);
+  width: 28px;
   height: 1px;
   background: var(--chrome);
 }
-
-.menu__close-icon::before { transform: rotate(32deg); }
-.menu__close-icon::after { transform: rotate(-32deg); }
 
 .menu__nav {
   position: relative;
@@ -145,13 +142,14 @@
   color: var(--pewter);
 }
 
+/* keyboard focus in silver: ember is reserved for an active guarantee in Verify */
 .menu__link:focus-visible {
-  outline: 1px solid var(--ember);
+  outline: 1px solid var(--chrome);
   outline-offset: 6px;
 }
 
 .menu__close:focus-visible {
-  outline: 1px solid var(--ember);
+  outline: 1px solid var(--chrome);
   outline-offset: 6px;
 }
 

@@ -61,21 +61,16 @@
   opacity: calc(var(--vialcopy, 0) * 1.2);
 }
 
-.melange__figures {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.melange__figure {
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: flex-end;
-  gap: 10px;
+.melange__grade {
+  margin: 18px 0 10px;
+  font: 400 24px/32px var(--font-ceremonial); /* Cinzel at its 24px floor */
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--chrome);
 }
 
 .melange__figure-label {
+  margin: 0;
   font: 500 11px/1 var(--font-sans);
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -84,7 +79,7 @@
 
 .melange__figure-value {
   margin: 0;
-  font: 300 clamp(28px, 2.6vw, 44px) / 1 var(--font-mono);
+  font: 300 clamp(40px, 3.6vw, 64px) / 1 var(--font-mono);
   letter-spacing: -0.01em;
   color: var(--chrome);
 }
@@ -98,5 +93,4 @@
   .melange__copy,
   .melange__record { grid-column: 1; }
   .melange__record { justify-self: start; text-align: left; }
-  .melange__figure { align-items: flex-start; }
 }
