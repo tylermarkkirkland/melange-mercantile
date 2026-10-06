@@ -106,6 +106,7 @@ export default function App() {
       // row scrolls away
       const docked = Math.min(1, Math.max(0, (s.dock - 0.95) / 0.05));
       root.style.setProperty('--mark-show', docked.toFixed(4));
+      root.classList.toggle('mark-docked', docked > 0.01); // the logo can be clicked once it's there
       root.classList.toggle('mark-under', s.y > window.innerHeight * 8.7 && galleryOverLogo());
       setArrakisActive((prev) => (prev ? s.copy > 0.2 : s.copy > 0.6));
       setMelangeActive((prev) => (prev ? s.vialCopy > 0.2 : s.vialCopy > 0.6));
@@ -203,6 +204,17 @@ export default function App() {
     return () => window.removeEventListener('pagehide', save);
   }, [reducedMotion, reloadSpot]);
 
+  // The docked logo takes you back to the landing
+  const toLanding = useCallback(() => {
+    setMenuOpen(false);
+    if (lenis) {
+      lenis.start();
+      lenis.scrollTo(0, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4) });
+    } else {
+      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
+  }, [lenis, reducedMotion]);
+
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
     if (at === 'verify') { openVerify(); return; }
@@ -242,7 +254,9 @@ export default function App() {
       <div className="film-grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
       <div className="topbar-fade" aria-hidden="true" />
-      <img className="site-mark" src="/models/logo-chrome.svg" alt="" aria-hidden="true" />
+      <button className="site-mark" type="button" onClick={toLanding} aria-label="Melange Mercantile: back to the top">
+        <img src="/models/logo-chrome.svg" alt="" />
+      </button>
       <LandingUI
         phase={phase}
         onSkip={skip}

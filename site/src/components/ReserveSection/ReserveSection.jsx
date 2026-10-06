@@ -17,6 +17,9 @@ export default function ReserveSection({ onRequest }) {
   const gradesRef = useRef(null);
   const headIn = useInView(headRef, { once: true, amount: 0.6 });
   const gradesIn = useInView(gradesRef, { once: true, amount: 0.35 });
+  // the figures roll once the row has risen in, and again each time it comes back
+  // into view (like Arakis), so the roll is seen rather than hidden in the fade
+  const rolling = useInView(gradesRef, { amount: 0.5 });
 
   const rise = (i, shown) => ({
     initial: reduced ? false : { opacity: 0, y: 18 },
@@ -43,7 +46,7 @@ export default function ReserveSection({ onRequest }) {
           {GRADES.map((g, i) => (
             <motion.li key={g.name} className="reserve__grade" {...rise(i, gradesIn)}>
               <p className="reserve__purity">
-                <RollingNumber value={g.purity} suffix="%" active={gradesIn || reduced} delay={200 + i * 140} />
+                <RollingNumber value={g.purity} suffix="%" active={rolling || reduced} delay={650 + i * 180} />
               </p>
               <h3 className="reserve__name">{g.name}</h3>
               <p className="reserve__basin">{g.basin}</p>
