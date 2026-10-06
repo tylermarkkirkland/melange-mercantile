@@ -79,7 +79,7 @@ export const SAND_DEFAULTS = {
   mound: 0.1, // the soft hump in the middle
   ripple: 1, // dune ripple height
   rippleScale: 1, // dune ripple spacing (higher is tighter)
-  grain: 0.35, // grain size (lower is finer)
+  grain: 1.19, // grain size (lower is finer)
   color: '#ffffff', // tint over the powder's own colours
   glow: 0.12, // warmth from within
   glints: 0.5, // how many grains catch the lamp
@@ -92,7 +92,7 @@ export const SAND_DEFAULTS = {
   moteSpeed: 1,
   lamp: 1, // the lamp in the top cap
   shaft: 1, // the beam beneath it
-  condensation: 0.35, // droplets on the glass, above the sand only
+  condensation: 0, // droplets on the glass, above the sand only (off: Tyler, 2026-10-06)
 };
 
 // A shaft of light falling from the lamp in the top cap
