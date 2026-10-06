@@ -2,7 +2,6 @@
 // page, you write your request by hand, and it is sealed in wax.
 
 export const ALLOCATION_COPY = {
-  eyebrow: 'Allocation',
   title: 'REQUEST AN ALLOCATION',
   salutation: 'To the Factors of Melange Mercantile,',
   closing: 'Yours in trade,',

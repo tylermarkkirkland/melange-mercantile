@@ -81,6 +81,8 @@
 .arrakis__stats {
   margin: 0;
   display: grid;
+  /* fade in with the headline, so the counters' resting zeros never show on their own */
+  opacity: calc(var(--copy, 0) * 1.2);
   grid-template-columns: repeat(3, 1fr);
   align-items: end;
 }

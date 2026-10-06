@@ -364,8 +364,6 @@ export function createSealPress(canvas, { reducedMotion = false } = {}) {
         raf = requestAnimationFrame(tick);
       });
     },
-    /** Show the finished seal without playing the press. */
-    show() { stop(); setSize(); pose(PRESS_MS); render(); },
     reset() { stop(); pose(0); render(); },
     /** Freeze at one moment of the press (for reviewing frames). */
     poseAt(t) { stop(); setSize(); pose(t); render(); },

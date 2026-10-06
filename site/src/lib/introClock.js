@@ -6,7 +6,7 @@ import { SETTLED_TIME } from '../data/intro.js';
 // only for screenshots: the whole scene stands still.
 export function createIntroClock({ settled = false } = {}) {
   const param = new URLSearchParams(window.location.search).get('t');
-  const frozen = param != null && param !== 'final' && !Number.isNaN(Number(param)) ? Number(param) : null;
+  const frozen = param && param !== 'final' && Number.isFinite(Number(param)) ? Number(param) : null; // an empty ?t= runs normally
   const start = performance.now();
   let offset = settled || param === 'final' ? SETTLED_TIME : 0;
 
