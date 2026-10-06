@@ -633,7 +633,9 @@ export function createVial(renderer, settings = {}) {
       const lit = smooth(Math.min(1, Math.max(0, (show - 0.6) / 0.4)));
 
       group.position.y = THREE.MathUtils.lerp(-HEIGHT * 2.2, REST_Y, rise) + Math.sin(seconds * 0.6) * 0.02 * rise;
-      capsule.rotation.y = spin * Math.PI * 1.2 + (1 - rise) * 0.6;
+      // the pillar plates sit at a quarter turn; offset so the front one faces the
+      // reader squarely halfway through the section's turn (spin 0.5), not at its start
+      capsule.rotation.y = spin * Math.PI * 1.2 - Math.PI * 0.1 + (1 - rise) * 0.6;
       group.rotation.y = tilt.y;
       group.rotation.x = tilt.x * 0.7;
 
