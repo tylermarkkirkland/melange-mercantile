@@ -150,34 +150,82 @@ export default function App() {
     else lenis.start();
   }, [menuOpen, lenis, phase]);
 
-  // Verify is the last section of the page. The header link and the menu glide down
-  // to it and put the cursor in the field; #verify in the address lands there too.
-  const scrollToEl = useCallback((el, opts = {}) => {
-    if (!el) return;
+  // Getting around the page. Long trips don't scroll back through every section:
+  //   cut:   from the menu. The page jumps while the menu still covers it, and the
+  //          menu fading away reveals the destination.
+  //   fade:  from links on the page (the logo, "Verify a consignment", Request).
+  //          The page fades to black, jumps while it's dark, and fades back in.
+  //   glide: short, local moves, where seeing the page travel helps.
+  // `to` is a y position in pixels or an element; `arrive` runs once it's there.
+  const FADE_OUT_MS = 550;
+  const FADE_IN_MS = 900;
+  const MENU_CLOSE_MS = 600; // the menu's own fade out, plus a beat
+  const jumpTo = useCallback((to) => {
     if (lenis) {
       lenis.start();
-      lenis.scrollTo(el, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4), ...opts });
+      lenis.scrollTo(to, { immediate: true, force: true });
+    } else if (typeof to === 'number') {
+      window.scrollTo(0, to);
     } else {
-      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
-      opts.onComplete?.();
+      to?.scrollIntoView();
     }
-  }, [lenis, reducedMotion]);
-  const openVerify = useCallback(() => {
+  }, [lenis]);
+  const travel = useCallback((to, how, arrive) => {
+    if (to == null) return;
+    if (how === 'cut') {
+      jumpTo(to);
+      setMenuOpen(false);
+      // after the menu has gone (it hands focus back to its button as it closes)
+      if (arrive) setTimeout(arrive, MENU_CLOSE_MS);
+      return;
+    }
     setMenuOpen(false);
+    if (how === 'glide') {
+      if (lenis) {
+        lenis.start();
+        lenis.scrollTo(to, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4), onComplete: arrive });
+      } else {
+        if (typeof to === 'number') window.scrollTo({ top: to, behavior: reducedMotion ? 'auto' : 'smooth' });
+        else to.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+        arrive?.();
+      }
+      return;
+    }
+    // fade
+    const curtain = curtainRef.current;
+    if (reducedMotion || !curtain) { jumpTo(to); arrive?.(); return; }
+    curtain.classList.add('is-closed');
+    setTimeout(() => {
+      jumpTo(to);
+      // two frames for the scene and the page to draw the destination before it shows
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        curtain.classList.remove('is-closed');
+        arrive?.();
+      }));
+    }, FADE_OUT_MS);
+  }, [jumpTo, lenis, reducedMotion]);
+
+  // Verify is the last section of the page, with the cursor put in its field
+  const openVerify = useCallback((how = 'fade') => {
     const v = verifyRef.current;
-    scrollToEl(v?.section, { onComplete: () => v?.focusInput() });
-  }, [scrollToEl]);
-  // Allocation sits just before Verify; the menu and Verify's "Don't have a code?" glide
-  // to the moment its sheet is fully unrolled, with the cursor in the first blank
-  // The Reserve's "Request" arrives with that grade already circled on the letter
-  const openAllocation = useCallback((grade) => {
-    setMenuOpen(false);
+    travel(v?.section, how, () => v?.focusInput());
+  }, [travel]);
+  // Allocation sits just before Verify, arriving with its sheet fully unrolled and
+  // the cursor in the first blank. The Reserve's "Request" circles its grade first.
+  const openAllocation = useCallback((grade, how = 'fade') => {
     const a = allocationRef.current;
     if (typeof grade === 'string') a?.circleGrade(grade);
-    scrollToEl(a?.section, { onComplete: () => a?.focusInput() });
-  }, [scrollToEl]);
+    travel(a?.section, how, () => a?.focusInput());
+  }, [travel]);
+  // Verify's "Don't have a code?": Allocation is just above, so it glides there
+  const allocationFromVerify = useCallback(() => openAllocation(null, 'glide'), [openAllocation]);
+  // the docked logo takes you back to the landing
+  const toLanding = useCallback(() => travel(0, 'fade'), [travel]);
   // keep each Verify result in view as the section grows or shrinks
-  const onVerifyResult = useCallback((el) => scrollToEl(el, { duration: 0.9 }), [scrollToEl]);
+  const onVerifyResult = useCallback((el) => {
+    if (lenis) lenis.scrollTo(el, { duration: 0.9, easing: (t) => 1 - Math.pow(1 - t, 4) });
+    else el?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+  }, [lenis, reducedMotion]);
   // A shared #verify link lands there once, then clears itself so reloads start at the top
   useEffect(() => {
     if (phase !== 'interface' || !lenis || window.location.hash !== '#verify') return;
@@ -205,44 +253,12 @@ export default function App() {
     return () => window.removeEventListener('pagehide', save);
   }, [reducedMotion, reloadSpot]);
 
-  // The docked logo takes you back to the landing: the page fades to black, jumps
-  // to the top while it's dark, and fades back in there, rather than racing back
-  // up through every section
-  const FADE_OUT_MS = 550;
-  const FADE_IN_MS = 900;
-  const toLanding = useCallback(() => {
-    setMenuOpen(false);
-    const jump = () => {
-      if (lenis) {
-        lenis.start();
-        lenis.scrollTo(0, { immediate: true, force: true });
-      } else {
-        window.scrollTo(0, 0);
-      }
-    };
-    const curtain = curtainRef.current;
-    if (reducedMotion || !curtain) { jump(); return; }
-    curtain.classList.add('is-closed');
-    setTimeout(() => {
-      jump();
-      // two frames for the scene and the page to draw the landing before it shows
-      requestAnimationFrame(() => requestAnimationFrame(() => curtain.classList.remove('is-closed')));
-    }, FADE_OUT_MS);
-  }, [lenis, reducedMotion]);
-
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const navigate = useCallback((at) => {
-    if (at === 'verify') { openVerify(); return; }
-    if (at === 'allocation') { openAllocation(); return; }
-    setMenuOpen(false);
-    const y = at * window.innerHeight;
-    if (lenis) {
-      lenis.start();
-      lenis.scrollTo(y, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4) });
-    } else {
-      window.scrollTo({ top: y, behavior: reducedMotion ? 'auto' : 'smooth' });
-    }
-  }, [lenis, reducedMotion, openVerify, openAllocation]);
+    if (at === 'verify') { openVerify('cut'); return; }
+    if (at === 'allocation') { openAllocation(null, 'cut'); return; }
+    travel(at * window.innerHeight, 'cut');
+  }, [travel, openVerify, openAllocation]);
 
   const skip = useCallback(() => {
     clock.skip();
@@ -278,17 +294,17 @@ export default function App() {
         menuOpen={menuOpen}
         onMenu={() => setMenuOpen(true)}
         menuButtonRef={menuButtonRef}
-        onVerify={openVerify}
+        onVerify={() => openVerify('fade')}
       />
       <div className="track">
         <section className="track__arrival" id="arrival" aria-label="Arrival" />
         <ArrakisSection active={arrakisActive} />
         <MelangeSection active={melangeActive} />
-        <ReserveSection onRequest={openAllocation} />
+        <ReserveSection onRequest={(grade) => openAllocation(grade, 'fade')} />
         <GallerySection />
         <ArrivalSection />
         <Allocation ref={allocationRef} />
-        <Verify ref={verifyRef} onResult={onVerifyResult} onRequestAllocation={openAllocation} />
+        <Verify ref={verifyRef} onResult={onVerifyResult} onRequestAllocation={allocationFromVerify} />
       </div>
       <Menu open={menuOpen} onClose={closeMenu} onNavigate={navigate} returnFocusTo={menuButtonRef} />
       <div
