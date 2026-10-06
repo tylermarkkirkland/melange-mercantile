@@ -182,9 +182,23 @@ function makePanelTextures(seed, logo) {
     }
   }
 
+  // The relief the lighting reads is a softened copy: hair-thin, hard-edged grooves
+  // in a bump map shimmer and flicker as the band turns, so they get a gentle slope
+  const softBump = document.createElement('canvas');
+  softBump.width = W;
+  softBump.height = H;
+  const sb = softBump.getContext('2d');
+  const soften = () => {
+    sb.clearRect(0, 0, W, H);
+    sb.filter = 'blur(1.4px)';
+    sb.drawImage(bump, 0, 0);
+    sb.filter = 'none';
+  };
+  soften();
+
   const textures = {
     map: new THREE.CanvasTexture(color),
-    bump: new THREE.CanvasTexture(bump),
+    bump: new THREE.CanvasTexture(softBump),
   };
   textures.map.colorSpace = THREE.SRGBColorSpace;
   for (const t of Object.values(textures)) {
@@ -219,6 +233,7 @@ function makePanelTextures(seed, logo) {
         b.drawImage(img, lx, ly, lw, lh);
         b.globalAlpha = 1;
       }
+      soften();
       textures.map.needsUpdate = true;
       textures.bump.needsUpdate = true;
     };
@@ -385,13 +400,17 @@ export function createVial(renderer, settings = {}) {
     ring(CAP_R, TIER_H, at(TIER_H), bandPlain); // inner tier
     ring(CAP_R - 0.03, 0.035, at(0.035), gun); // groove
     ring(CAP_R, TIER_H, at(TIER_H), outerTier); // outer tier
-    ring(CAP_R - 0.01, 0.02, at(0.02), silver); // chamfer
+    // chamfer: open-ended, because its top would sit exactly on the crown and the
+    // two would fight over which shows (flickering lines as the capsule turns)
+    ring(CAP_R - 0.01, 0.02, at(0.02), silver, true);
     const crownY = dir * y;
     const crown = new THREE.Mesh(track(new THREE.CircleGeometry(CAP_R - 0.01, 128)), gun);
     crown.rotation.x = dir > 0 ? -Math.PI / 2 : Math.PI / 2;
     crown.position.y = crownY;
     capsule.add(crown);
-    ring(0.2, 0.025, crownY + dir * 0.012, gun); // centre boss on the crown
+    // centre boss on the crown, its base sunk well inside the cap so it never
+    // touches the crown's surface (same reason)
+    ring(0.2, 0.04, crownY + dir * 0.005, gun);
     return y;
   };
   const capTop = buildCap(1, bandMarked);
