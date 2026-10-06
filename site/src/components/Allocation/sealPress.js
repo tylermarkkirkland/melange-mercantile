@@ -85,9 +85,8 @@ const STAMP_HANDLE = [
 // pillar's bevels, the inner wall) hold less, which keeps the pillar legible.
 // The rim beyond the stamp's edge stays bare black wax.
 //
-// Every look of the powder is a live setting (the seal lab has sliders for them);
-// these are the values the page uses, as Tyler tuned them in the lab (2026-10-06):
-// a light, chalky dusting caught mostly on the pillar, the field left nearly bare.
+// The powder's look, as Tyler tuned it (2026-10-06): a light, chalky dusting
+// caught mostly on the pillar, the field left nearly bare.
 export const DUST_DEFAULTS = {
   coverage: 0.15, // the powder everywhere, before grain
   grain: 0.37, // how much the grain adds on top
@@ -105,9 +104,9 @@ export const DUST_DEFAULTS = {
   roughness: 0.69,
 };
 
-function dustUniforms(values) {
+function dustUniforms() {
   const u = {};
-  for (const [k, v] of Object.entries({ ...DUST_DEFAULTS, ...values })) u[k] = { value: v };
+  for (const [k, v] of Object.entries(DUST_DEFAULTS)) u[k] = { value: v };
   return u;
 }
 
@@ -123,7 +122,7 @@ function dustedWax(uniforms, { unit, which }) {
   });
   const isField = which === 'field';
   mat.onBeforeCompile = (shader) => {
-    // the shared settings, so a change in the lab reaches every dusted surface at once
+    // the shared settings, so the field and the pillar always match
     for (const k of Object.keys(DUST_DEFAULTS)) shader.uniforms[`uDust_${k}`] = uniforms[k];
     shader.uniforms.uDustUnit = { value: unit };
     shader.vertexShader = shader.vertexShader
@@ -170,8 +169,8 @@ function turned(profile, segments = 96) {
   return geo;
 }
 
-export function createSealPress(canvas, { reducedMotion = false, dust = {} } = {}) {
-  const dustSettings = dustUniforms(dust);
+export function createSealPress(canvas, { reducedMotion = false } = {}) {
+  const dustSettings = dustUniforms();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
@@ -344,11 +343,8 @@ export function createSealPress(canvas, { reducedMotion = false, dust = {} } = {
   const stop = () => { cancelAnimationFrame(raf); raf = 0; };
 
   return {
-    /**
-     * Play the whole press; resolves when the stamp has gone. The seal lab passes
-     * a slower `speed` and an `onFrame(ms)` to follow along.
-     */
-    press({ speed = 1, onFrame } = {}) {
+    /** Play the whole press; resolves when the stamp has gone. */
+    press() {
       stop();
       setSize();
       if (reducedMotion) {
@@ -359,10 +355,9 @@ export function createSealPress(canvas, { reducedMotion = false, dust = {} } = {
       return new Promise((resolve) => {
         const start = performance.now();
         const tick = (now) => {
-          const t = Math.min(PRESS_MS, (now - start) * speed);
+          const t = Math.min(PRESS_MS, now - start);
           pose(t);
           render();
-          onFrame?.(t);
           if (t < PRESS_MS) raf = requestAnimationFrame(tick);
           else { raf = 0; resolve(); }
         };
@@ -372,11 +367,6 @@ export function createSealPress(canvas, { reducedMotion = false, dust = {} } = {
     /** Show the finished seal without playing the press. */
     show() { stop(); setSize(); pose(PRESS_MS); render(); },
     reset() { stop(); pose(0); render(); },
-    /** Change the silver dusting live (any keys of DUST_DEFAULTS); redraws the current frame. */
-    setDust(values) {
-      for (const [k, v] of Object.entries(values)) if (dustSettings[k]) dustSettings[k].value = v;
-      render();
-    },
     /** Freeze at one moment of the press (for reviewing frames). */
     poseAt(t) { stop(); setSize(); pose(t); render(); },
     resize() { setSize(); render(); },
