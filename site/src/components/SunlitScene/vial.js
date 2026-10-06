@@ -74,16 +74,18 @@ const motesFragment = /* glsl */ `
 // these are what the site uses.
 export const SAND_DEFAULTS = {
   fill: 0.5, // how full the chamber is, at its axis (0 empty, 1 full)
-  repose: 32, // angle of repose, in degrees: the steepest slope the sand holds
+  repose: 20, // angle of repose, in degrees: the steepest slope the sand holds
   //              before it gives way (0 behaves like liquid, 90 is stuck to the glass)
-  slump: 0.18, // how fast it slides once it gives way
+  slump: 0.2, // how fast it slides once it gives way
+  settleTo: 0.5, // how far a slump goes: the share of the repose angle it ends at
+  creep: 0.6, // degrees per second it drifts toward level while holding, so it never looks frozen
   mound: 0.1, // the soft hump in the middle
   ripple: 1, // dune ripple height
   rippleScale: 1, // dune ripple spacing (higher is tighter)
   grain: 1.19, // grain size (lower is finer)
   color: '#ffffff', // tint over the powder's own colours
   glow: 0.12, // warmth from within
-  glints: 0.5, // how many grains catch the lamp
+  glints: 0, // how many grains catch the lamp (off: Tyler, 2026-10-06)
   glintBright: 0.9,
   cling: 0.55, // powder left on the glass above the sand
   clingHeight: 0.12,
@@ -610,6 +612,7 @@ export function createVial(renderer, settings = {}) {
   const slideAxis = new THREE.Vector3();
   let upReady = false;
   let slumping = false;
+  let lastSeconds = 0;
 
   const camDir = new THREE.Vector3();
   const smooth = (x) => x * x * (3 - 2 * x);
@@ -640,6 +643,8 @@ export function createVial(renderer, settings = {}) {
         shaft.rotation.y = Math.atan2(camDir.x, camDir.z);
       }
 
+      const dt = Math.min(0.1, Math.max(0, seconds - lastSeconds));
+      lastSeconds = seconds;
       // Sand, not liquid: the surface holds its slope until the tilt passes the
       // angle of repose, then slumps until it's back under it, and stops dead.
       capsule.updateWorldMatrix(true, false);
@@ -648,19 +653,24 @@ export function createVial(renderer, settings = {}) {
       if (!upReady) { upNow.copy(upTarget); upReady = true; }
       const repose = THREE.MathUtils.degToRad(S.repose);
       const slope = upNow.angleTo(upTarget);
+      // slumping: slide well under the limit, the way an avalanche overshoots;
+      // holding: creep toward level so slowly it reads as settling, not flowing
+      let next = slope;
       if (slumping || slope > repose) {
-        // slide to a little under the limit: it overshoots, the way an avalanche does
-        const rest = repose * 0.82;
-        const next = slope + (rest - slope) * S.slump;
-        if (slope - rest < 0.004 || next >= slope) {
-          slumping = false;
-        } else {
-          slumping = true;
-          slideAxis.crossVectors(upTarget, upNow);
-          if (slideAxis.lengthSq() > 1e-10) {
-            slideAxis.normalize();
-            upNow.copy(upTarget).applyAxisAngle(slideAxis, next);
-          }
+        // an avalanche: quick, and it always finishes, even while the capsule is
+        // still turning (a slower slide would just trail the glass at a fixed lag)
+        const rest = repose * S.settleTo;
+        const minSlide = THREE.MathUtils.degToRad(40) * dt; // at least 40° a second
+        next = Math.max(rest, slope - Math.max((slope - rest) * S.slump, minSlide));
+        slumping = next - rest > THREE.MathUtils.degToRad(1); // done within a degree of rest
+      } else {
+        next = Math.max(0, slope - THREE.MathUtils.degToRad(S.creep) * dt);
+      }
+      if (next < slope) {
+        slideAxis.crossVectors(upTarget, upNow);
+        if (slideAxis.lengthSq() > 1e-10) {
+          slideAxis.normalize();
+          upNow.copy(upTarget).applyAxisAngle(slideAxis, next);
         }
       }
       sand.uUp.value.copy(upNow);

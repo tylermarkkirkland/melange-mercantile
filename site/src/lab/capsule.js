@@ -76,6 +76,8 @@ const view = {
   background: '#000000',
 };
 
+window.__lab = { vial, holder, view }; // for inspecting in devtools
+
 // Drag to tip and turn the capsule itself (not the camera), so the sand inside
 // has something to settle against. Scroll to zoom; double-click to set it upright.
 const turn = new THREE.Quaternion();
@@ -120,6 +122,8 @@ const sandF = gui.addFolder('Sand');
 add(sandF, 'fill', 0.1, 0.9, 0.01, 'Fill');
 add(sandF, 'repose', 0, 90, 1, 'Angle of repose (°)');
 add(sandF, 'slump', 0.02, 1, 0.01, 'Slump speed');
+add(sandF, 'settleTo', 0, 1, 0.01, 'Slump goes to (× repose)');
+add(sandF, 'creep', 0, 5, 0.1, 'Creep while holding (°/s)');
 add(sandF, 'mound', 0, 0.3, 0.005, 'Mound');
 add(sandF, 'ripple', 0, 3, 0.05, 'Ripple height');
 add(sandF, 'rippleScale', 0.3, 3, 0.05, 'Ripple tightness');
@@ -198,7 +202,7 @@ const frame = (now) => {
   holder.quaternion.copy(turn);
   holder.position.y = -0.05; // centre the capsule (the site rests it a touch high)
   // show 1: risen and lit; spin turns it about its own axis like scrolling does
-  vial.update(t, { show: 1, spin: spin % 1, tilt: { x: 0, y: 0 } }, camera);
+  vial.update(t, { show: 1, spin, tilt: { x: 0, y: 0 } }, camera); // unwrapped, so turning never jumps
   const sl = `Sand slope ${vial.slope.toFixed(1)}° · gives way past ${settings.repose}°`;
   if (sl !== shownSlope) { slope.textContent = sl; shownSlope = sl; }
   composer.render();
