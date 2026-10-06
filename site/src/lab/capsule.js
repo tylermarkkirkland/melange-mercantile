@@ -14,7 +14,9 @@ import { createVial, SAND_DEFAULTS } from '../components/SunlitScene/vial.js';
 const STORE = 'capsule-lab';
 const load = () => {
   try {
-    return { ...SAND_DEFAULTS, ...JSON.parse(localStorage.getItem(STORE) || '{}') };
+    const saved = JSON.parse(localStorage.getItem(STORE) || '{}');
+    // keep only settings that still exist
+    return Object.fromEntries(Object.keys(SAND_DEFAULTS).map((k) => [k, k in saved ? saved[k] : SAND_DEFAULTS[k]]));
   } catch {
     return { ...SAND_DEFAULTS };
   }
@@ -116,8 +118,8 @@ const add = (folder, k, min, max, step, name) => folder.add(settings, k, min, ma
 
 const sandF = gui.addFolder('Sand');
 add(sandF, 'fill', 0.1, 0.9, 0.01, 'Fill');
-add(sandF, 'settle', 0, 1, 0.01, 'Stays level (gravity)');
-add(sandF, 'slide', 0.005, 1, 0.005, 'Slide speed');
+add(sandF, 'repose', 0, 90, 1, 'Angle of repose (°)');
+add(sandF, 'slump', 0.02, 1, 0.01, 'Slump speed');
 add(sandF, 'mound', 0, 0.3, 0.005, 'Mound');
 add(sandF, 'ripple', 0, 3, 0.05, 'Ripple height');
 add(sandF, 'rippleScale', 0.3, 3, 0.05, 'Ripple tightness');
@@ -135,7 +137,7 @@ const moteF = gui.addFolder('Motes in the beam');
 add(moteF, 'motes', 0, 1, 0.01, 'How many');
 add(moteF, 'moteSize', 0.2, 4, 0.05, 'Size');
 add(moteF, 'moteOpacity', 0, 1, 0.01, 'Opacity');
-add(moteF, 'moteSpeed', 0, 5, 0.05, 'Fall speed');
+add(moteF, 'moteSpeed', 0, 5, 0.05, 'Rise speed');
 
 const lightF = gui.addFolder('Capsule light');
 add(lightF, 'lamp', 0, 2, 0.01, 'Lamp');
@@ -172,6 +174,12 @@ hint.textContent = 'Drag sideways to lean it · up and down to tip it toward you
 hint.style.cssText = 'position:fixed;left:20px;bottom:16px;margin:0;font:12px/1 system-ui,sans-serif;color:#75797b;letter-spacing:.08em';
 document.body.appendChild(hint);
 
+// how far the sand's surface is from level right now
+const slope = document.createElement('p');
+slope.style.cssText = 'position:fixed;left:20px;top:16px;margin:0;font:12px/1 ui-monospace,monospace;color:#9ea1a3;letter-spacing:.06em';
+document.body.appendChild(slope);
+let shownSlope = '';
+
 // ---------- loop ----------
 const start = performance.now();
 let last = start;
@@ -191,6 +199,8 @@ const frame = (now) => {
   holder.position.y = -0.05; // centre the capsule (the site rests it a touch high)
   // show 1: risen and lit; spin turns it about its own axis like scrolling does
   vial.update(t, { show: 1, spin: spin % 1, tilt: { x: 0, y: 0 } }, camera);
+  const sl = `Sand slope ${vial.slope.toFixed(1)}° · gives way past ${settings.repose}°`;
+  if (sl !== shownSlope) { slope.textContent = sl; shownSlope = sl; }
   composer.render();
   requestAnimationFrame(frame);
 };

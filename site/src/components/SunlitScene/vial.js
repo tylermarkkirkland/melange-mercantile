@@ -24,8 +24,8 @@ const SAND_GLSL = /* glsl */ `
   }
 `;
 
-// Fine melange hanging in the lamp's beam: a few soft motes drifting slowly down
-// and settling onto the sand, brightest where the beam is. Normal blending, not
+// Fine melange hanging in the lamp's beam: a few soft motes lifting slowly off
+// the sand toward the lamp, brightest where the beam is. Normal blending, not
 // additive, so they read as powder in the air rather than sparks.
 const motesVertex = /* glsl */ `
   attribute vec4 aSeed;
@@ -43,13 +43,13 @@ const motesVertex = /* glsl */ `
     float a = position.z + uTime * 0.03 * (aSeed.x - 0.5) + uStir * (0.4 + aSeed.x);
     float r = position.x + sin(uTime * 0.4 + aSeed.w * 6.28) * 0.015; // a slight sway
     vec2 xz = vec2(cos(a) * r, sin(a) * r);
-    float floorY = sandY(xz) + 0.05; // each mote settles onto the sand beneath it
+    float floorY = sandY(xz) + 0.05; // each mote lifts off the sand beneath it
     float span = max(uMoteTop - floorY, 0.05);
-    float fall = mod(position.y + uTime * uSpeed * (0.012 + aSeed.y * 0.018), span);
-    vec3 p = vec3(xz.x, uMoteTop - fall, xz.y);
+    float fall = mod(position.y + uTime * uSpeed * (0.012 + aSeed.y * 0.018), span); // distance risen
+    vec3 p = vec3(xz.x, floorY + fall, xz.y);
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
-    float ends = smoothstep(0.0, 0.12, fall) * smoothstep(span, span - 0.1, fall); // appear, then settle away
+    float ends = smoothstep(0.0, 0.12, fall) * smoothstep(span, span - 0.1, fall); // lift into view, fade below the lamp
     float beam = 0.35 + 0.65 * exp(-r * r * 9.0);
     vLight = ends * beam * step(aSeed.x, uCount); // uCount: the share of motes shown
     vTone = aSeed.w;
@@ -74,8 +74,9 @@ const motesFragment = /* glsl */ `
 // these are what the site uses.
 export const SAND_DEFAULTS = {
   fill: 0.5, // how full the chamber is, at its axis (0 empty, 1 full)
-  settle: 1, // 0: fixed to the glass; 1: stays level with gravity as the capsule tips
-  slide: 0.06, // how quickly it re-levels after a tip (0 never, 1 instantly)
+  repose: 32, // angle of repose, in degrees: the steepest slope the sand holds
+  //              before it gives way (0 behaves like liquid, 90 is stuck to the glass)
+  slump: 0.18, // how fast it slides once it gives way
   mound: 0.1, // the soft hump in the middle
   ripple: 1, // dune ripple height
   rippleScale: 1, // dune ripple spacing (higher is tighter)
@@ -89,7 +90,7 @@ export const SAND_DEFAULTS = {
   motes: 1, // share of the motes shown
   moteSize: 1,
   moteOpacity: 0.55,
-  moteSpeed: 1,
+  moteSpeed: 1, // how fast they rise
   lamp: 1, // the lamp in the top cap
   shaft: 1, // the beam beneath it
   condensation: 0, // droplets on the glass, above the sand only (off: Tyler, 2026-10-06)
@@ -315,7 +316,7 @@ function makeDropletTexture() {
 /**
  * A containment capsule of melange: a wide glass chamber between two heavy
  * machined caps with panel detailing, a lamp in the top cap lighting a heap of
- * settled melange, with a few fine motes drifting down through its beam. The Melange Mercantile pillar is inlaid in the top cap.
+ * settled melange, with a few fine motes lifting off it through its beam. The Melange Mercantile pillar is inlaid in the top cap.
  */
 export function createVial(renderer, settings = {}) {
   const group = new THREE.Group(); // whole assembly; tilts toward the cursor
@@ -606,8 +607,9 @@ export function createVial(renderer, settings = {}) {
   const worldQ = new THREE.Quaternion();
   const upTarget = new THREE.Vector3();
   const upNow = new THREE.Vector3(0, 1, 0);
-  const AXIS_UP = new THREE.Vector3(0, 1, 0);
+  const slideAxis = new THREE.Vector3();
   let upReady = false;
+  let slumping = false;
 
   const camDir = new THREE.Vector3();
   const smooth = (x) => x * x * (3 - 2 * x);
@@ -638,13 +640,29 @@ export function createVial(renderer, settings = {}) {
         shaft.rotation.y = Math.atan2(camDir.x, camDir.z);
       }
 
-      // the sand stays level with gravity (as far as `settle` allows), sliding there
+      // Sand, not liquid: the surface holds its slope until the tilt passes the
+      // angle of repose, then slumps until it's back under it, and stops dead.
       capsule.updateWorldMatrix(true, false);
       capsule.getWorldQuaternion(worldQ).invert();
-      upTarget.set(0, 1, 0).applyQuaternion(worldQ);
-      upTarget.lerp(AXIS_UP, 1 - S.settle).normalize();
+      upTarget.set(0, 1, 0).applyQuaternion(worldQ); // "up", as seen from inside
       if (!upReady) { upNow.copy(upTarget); upReady = true; }
-      upNow.lerp(upTarget, S.slide).normalize();
+      const repose = THREE.MathUtils.degToRad(S.repose);
+      const slope = upNow.angleTo(upTarget);
+      if (slumping || slope > repose) {
+        // slide to a little under the limit: it overshoots, the way an avalanche does
+        const rest = repose * 0.82;
+        const next = slope + (rest - slope) * S.slump;
+        if (slope - rest < 0.004 || next >= slope) {
+          slumping = false;
+        } else {
+          slumping = true;
+          slideAxis.crossVectors(upTarget, upNow);
+          if (slideAxis.lengthSq() > 1e-10) {
+            slideAxis.normalize();
+            upNow.copy(upTarget).applyAxisAngle(slideAxis, next);
+          }
+        }
+      }
       sand.uUp.value.copy(upNow);
 
       sand.uTime.value = seconds;
@@ -661,6 +679,8 @@ export function createVial(renderer, settings = {}) {
       apply();
     },
     get settings() { return { ...S }; },
+    /** The sand's current tilt from level, in degrees (for the lab's readout). */
+    get slope() { return THREE.MathUtils.radToDeg(upNow.angleTo(upTarget)); },
     dispose() {
       disposables.forEach((d) => d.dispose());
     },
