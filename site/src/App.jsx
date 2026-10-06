@@ -52,6 +52,7 @@ export default function App() {
   const verifyRef = useRef(null);
   const allocationRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const curtainRef = useRef(null);
 
   // Follow the shared clock; only re-render when the phase actually changes
   useEffect(() => {
@@ -204,15 +205,29 @@ export default function App() {
     return () => window.removeEventListener('pagehide', save);
   }, [reducedMotion, reloadSpot]);
 
-  // The docked logo takes you back to the landing
+  // The docked logo takes you back to the landing: the page fades to black, jumps
+  // to the top while it's dark, and fades back in there, rather than racing back
+  // up through every section
+  const FADE_OUT_MS = 550;
+  const FADE_IN_MS = 900;
   const toLanding = useCallback(() => {
     setMenuOpen(false);
-    if (lenis) {
-      lenis.start();
-      lenis.scrollTo(0, { duration: 2.4, easing: (t) => 1 - Math.pow(1 - t, 4) });
-    } else {
-      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-    }
+    const jump = () => {
+      if (lenis) {
+        lenis.start();
+        lenis.scrollTo(0, { immediate: true, force: true });
+      } else {
+        window.scrollTo(0, 0);
+      }
+    };
+    const curtain = curtainRef.current;
+    if (reducedMotion || !curtain) { jump(); return; }
+    curtain.classList.add('is-closed');
+    setTimeout(() => {
+      jump();
+      // two frames for the scene and the page to draw the landing before it shows
+      requestAnimationFrame(() => requestAnimationFrame(() => curtain.classList.remove('is-closed')));
+    }, FADE_OUT_MS);
   }, [lenis, reducedMotion]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -276,6 +291,12 @@ export default function App() {
         <Verify ref={verifyRef} onResult={onVerifyResult} onRequestAllocation={openAllocation} />
       </div>
       <Menu open={menuOpen} onClose={closeMenu} onNavigate={navigate} returnFocusTo={menuButtonRef} />
+      <div
+        className="curtain"
+        ref={curtainRef}
+        aria-hidden="true"
+        style={{ '--fade-out': `${FADE_OUT_MS}ms`, '--fade-in': `${FADE_IN_MS}ms` }}
+      />
     </>
   );
 }
