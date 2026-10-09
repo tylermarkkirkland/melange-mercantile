@@ -13,7 +13,6 @@ export const SETTLED_TIME = TIMELINE.interface + 3000;
 export const CONTENT = {
   wordmarkTop: 'MELANGE',
   wordmarkBottom: 'MERCANTILE',
-  statement: 'A chartered, discreet source of melange for the Great Houses of the Imperium.',
   verifyLink: 'Verify a consignment',
   menu: 'Menu',
   scrollCue: 'Scroll',

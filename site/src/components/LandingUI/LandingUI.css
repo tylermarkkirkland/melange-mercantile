@@ -84,7 +84,7 @@
 .landing__menu-label { transition: opacity 0.4s ease 0.15s; }
 .landing__menu.is-open .landing__menu-label { opacity: 0; transition: opacity 0.3s ease; }
 
-/* Words and statement leave as the pillar docks (--dock runs 0 → 1 on scroll) */
+/* Words and cue leave as the pillar docks (--dock runs 0 → 1 on scroll) */
 .landing__fades {
   position: absolute;
   inset: 0;
@@ -145,22 +145,14 @@
   display: inline-block;
 }
 
-/* Bottom: one statement, one cue */
+/* Bottom: just the scroll cue, centred */
 .landing__bottom {
   position: absolute;
   left: 56px;
   right: 56px;
   bottom: 44px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: end;
-}
-
-.landing__statement {
-  margin: 0;
-  max-width: 30ch;
-  font: 400 15px/1.75 var(--font-sans);
-  color: var(--silver);
+  display: flex;
+  justify-content: center;
 }
 
 .landing__cue {

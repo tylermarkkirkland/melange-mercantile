@@ -79,9 +79,6 @@ export default function LandingUI({ phase, onSkip, menuOpen, onMenu, menuButtonR
       </div>
 
       <motion.footer className="landing__bottom" initial="hidden" animate={showInterface ? 'shown' : 'hidden'}>
-        <motion.p className="landing__statement" variants={fade(0)}>
-          {CONTENT.statement}
-        </motion.p>
         <motion.div className="landing__cue" variants={fade(0.6)} aria-hidden="true">
           <span className="landing__cue-label">{CONTENT.scrollCue}</span>
           <span className="landing__cue-line" />
