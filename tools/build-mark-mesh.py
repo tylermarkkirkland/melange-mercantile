@@ -24,6 +24,7 @@ CONFIG = dict(
     steps      = 8,       # bevel profile samples (per side)
     taper_mult = 1.5,     # cap offset length at this * inset  -> bevel tapers at points
     smooth     = 3,       # cyclic 1-2-1 passes over offset magnitudes
+    crease     = 50,      # faces meeting at more than this (degrees) get a crisp edge, not a shared normal
     base_color = "#9EA2A6",
     metallic   = 0.88,
     roughness  = 0.28,
@@ -184,33 +185,67 @@ def build():
             if ok: best = (d, off)
             else: break
         d, off = best
-        parts.append(dict(pts=c, off=off, inset=d, zr=min(d*1.4, 6.0), tris=earclip(c)))
+        # At a few short edges near sharp corners, two neighbouring points are pushed
+        # inward past each other, which folds a sliver of bevel over (a dark tick).
+        # Pull each such pair together so the inset edge keeps its direction.
+        off = list(off)
+        for _ in range(len(c)):
+            fixed_any = False
+            for j in range(len(c)):
+                k = (j+1) % len(c)
+                e = (c[k][0]-c[j][0], c[k][1]-c[j][1])
+                ij = (c[j][0]+off[j][0], c[j][1]+off[j][1]); ik = (c[k][0]+off[k][0], c[k][1]+off[k][1])
+                if (ik[0]-ij[0])*e[0] + (ik[1]-ij[1])*e[1] <= 0:
+                    mid = ((ij[0]+ik[0])/2, (ij[1]+ik[1])/2)
+                    off[j] = (mid[0] - 0.005*e[0] - c[j][0], mid[1] - 0.005*e[1] - c[j][1])
+                    off[k] = (mid[0] + 0.005*e[0] - c[k][0], mid[1] + 0.005*e[1] - c[k][1])
+                    fixed_any = True
+            if not fixed_any: break
+        # Triangulate the INSET outline, which is what the flat faces actually use.
+        # Triangulating the original outline and then moving its points inward
+        # flipped triangles at the sharp inner corners (the crack where the shafts
+        # meet the capital, and dark specks on the faces).
+        inset = [(c[j][0]+off[j][0], c[j][1]+off[j][1]) for j in range(len(c))]
+        parts.append(dict(pts=c, off=off, inset=d, zr=min(d*1.4, 6.0), tris=earclip(inset)))
 
     K = cfg["steps"]; h = cfg["half_depth"]
     prof = [((1-math.sin(a)), math.cos(a)) for a in [(i/K)*math.pi/2 for i in range(K+1)]]
     rings = [(f, cz, 1) for f, cz in prof] + [(f, cz, -1) for f, cz in reversed(prof)]
 
-    verts, faces = [], []
+    # verts carry their own normal slot: None = smooth (averaged from the bevel),
+    # or a fixed vector for the flat faces, which get vertices of their own so
+    # their normals never blend with the bevel's.
+    verts, faces, fixed = [], [], []
     for part in parts:
-        base = len(verts); n = len(part["pts"])
+        n = len(part["pts"]); G = len(rings)
+        base = len(verts)
         for (fr, cz, sgn) in rings:
             z = sgn * ((h - part["zr"]) + cz * part["zr"])
             for j in range(n):
                 px, py = part["pts"][j]; ox, oy = part["off"][j]
-                verts.append((px + ox*fr, py + oy*fr, z))
-        G = len(rings)
-        for (a, b, c) in part["tris"]: faces.append((base+a, base+b, base+c))
-        last = base + (G-1)*n
-        for (a, b, c) in part["tris"]: faces.append((last+a, last+c, last+b))
+                verts.append((px + ox*fr, py + oy*fr, z)); fixed.append(None)
+        # the bevel's first and last rings are tangent to the faces: exactly ±z
+        for j in range(n):
+            fixed[base + j] = (0.0, 0.0, 1.0)
+            fixed[base + (G-1)*n + j] = (0.0, 0.0, -1.0)
         for g in range(G-1):
             o1 = base + g*n; o2 = base + (g+1)*n
             for j in range(n):
                 a = j; b = (j+1) % n
                 faces.append((o1+a, o2+a, o2+b))
                 faces.append((o1+a, o2+b, o1+b))
+        # flat front and back faces, on their own vertices
+        for sgn, ring in ((1, 0), (-1, G-1)):
+            cap = len(verts)
+            for j in range(n):
+                verts.append(verts[base + ring*n + j]); fixed.append((0.0, 0.0, float(sgn)))
+            for (a, b, c) in part["tris"]:
+                faces.append((cap+a, cap+b, cap+c) if sgn > 0 else (cap+a, cap+c, cap+b))
+    build.fixed = fixed
     return verts, faces, parts
 
-def normals_for(verts, faces):
+def normals_for(verts, faces, fixed=None):
+    """Area-weighted smooth normals, except where `fixed` gives a vector."""
     acc = [[0.0, 0.0, 0.0] for _ in verts]
     for (i0, i1, i2) in faces:
         a, b, c = verts[i0], verts[i1], verts[i2]
@@ -219,10 +254,68 @@ def normals_for(verts, faces):
         for i in (i0, i1, i2):
             acc[i][0] += nx; acc[i][1] += ny; acc[i][2] += nz
     out = []
-    for n in acc:
+    for i, n in enumerate(acc):
+        if fixed and fixed[i] is not None:
+            out.append(fixed[i]); continue
         L = math.sqrt(n[0]**2 + n[1]**2 + n[2]**2) or 1.0
         out.append((n[0]/L, n[1]/L, n[2]/L))
     return out
+
+def auto_smooth(verts, faces, fixed, crease_deg):
+    """Per-corner normals: a corner averages only the neighbouring faces within
+       `crease_deg` of its own face, so walls that meet at a sharp corner of the
+       outline get a crisp edge instead of one compromise normal that shades one
+       wall dark. Returns new (verts, faces, normals), splitting vertices as needed."""
+    fn = []
+    for (i0, i1, i2) in faces:
+        a, b, c = verts[i0], verts[i1], verts[i2]
+        u = (b[0]-a[0], b[1]-a[1], b[2]-a[2]); v = (c[0]-a[0], c[1]-a[1], c[2]-a[2])
+        n = (u[1]*v[2] - u[2]*v[1], u[2]*v[0] - u[0]*v[2], u[0]*v[1] - u[1]*v[0])
+        L = math.sqrt(n[0]**2 + n[1]**2 + n[2]**2)
+        fn.append((n, (n[0]/L, n[1]/L, n[2]/L) if L > 1e-12 else (0.0, 0.0, 0.0)))
+    around = [[] for _ in verts]
+    for f, tri in enumerate(faces):
+        for i in tri: around[i].append(f)
+    # Drop tiny slivers folded the wrong way at concave corners (well under a unit;
+    # their neighbours already cover the spot). Kept, they shade as dark specks.
+    def folded(f):
+        n, u = fn[f]
+        if math.sqrt(n[0]**2 + n[1]**2 + n[2]**2) / 2 >= 2.0: return False
+        s = [0.0, 0.0, 0.0]
+        for i in faces[f]:
+            ref = fixed[i]
+            if ref is None:
+                for g in around[i]:
+                    if g != f: s = [s[k] + fn[g][1][k] for k in range(3)]
+            else:
+                s = [s[k] + ref[k] for k in range(3)]
+        return u[0]*s[0] + u[1]*s[1] + u[2]*s[2] < 0
+    keep = [f for f in range(len(faces)) if not folded(f)]
+    faces = [faces[f] for f in keep]; fn = [fn[f] for f in keep]
+    around = [[] for _ in verts]
+    for f, tri in enumerate(faces):
+        for i in tri: around[i].append(f)
+    cos_c = math.cos(math.radians(crease_deg))
+    new_verts, new_norms, new_faces, seen = [], [], [], {}
+    for f, tri in enumerate(faces):
+        out = []
+        for i in tri:
+            if fixed[i] is not None:
+                n = fixed[i]
+            else:
+                uf = fn[f][1]; s = [0.0, 0.0, 0.0]
+                for g in around[i]:
+                    ug = fn[g][1]
+                    if uf[0]*ug[0] + uf[1]*ug[1] + uf[2]*ug[2] >= cos_c:
+                        w = fn[g][0]; s[0] += w[0]; s[1] += w[1]; s[2] += w[2]
+                L = math.sqrt(s[0]**2 + s[1]**2 + s[2]**2) or 1.0
+                n = (s[0]/L, s[1]/L, s[2]/L)
+            key = (i, round(n[0], 4), round(n[1], 4), round(n[2], 4))
+            if key not in seen:
+                seen[key] = len(new_verts); new_verts.append(verts[i]); new_norms.append(n)
+            out.append(seen[key])
+        new_faces.append(tuple(out))
+    return new_verts, new_faces, new_norms
 
 def write_glb(path, verts, faces, norms, cfg):
     idx = [i for tri in faces for i in tri]
@@ -277,7 +370,7 @@ def write_glb(path, verts, faces, norms, cfg):
 if __name__ == "__main__":
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     verts, faces, parts = build()
-    norms = normals_for(verts, faces)
+    verts, faces, norms = auto_smooth(verts, faces, build.fixed, CONFIG["crease"])
     out = os.path.join(root, CONFIG["out"])
     size = write_glb(out, verts, faces, norms, CONFIG)
     print("contours :", len(parts), [len(p["pts"]) for p in parts])

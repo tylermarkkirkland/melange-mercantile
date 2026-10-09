@@ -171,6 +171,19 @@ Validate at **several ring fractions (0.25 / 0.5 / 0.75 / 1.0)**, not just the f
 self-intersect while the last one is clean. Tapering also *permits a larger bevel*, since nothing explodes:
 capital went 4.5 → 6.0 and body 3.6 → 4.5 at the same validation standard.
 
+**Lighting blemishes fixed (2026-10-09).** The lit pillar showed a dark crack where the middle shafts meet the
+capital, dark specks on the cap, and dark ticks along the shaft edges. Three causes, all now handled in
+`tools/build-mark-mesh.py`:
+1. **Triangulate the inset outline, not the original.** The flat faces were ear-clipped on the original contour
+   and then moved inward with the bevel, which flipped 18 triangles at sharp inner corners (the crack).
+2. **Flat faces get their own vertices and exact ±z normals.** Sharing vertices with the bevel, area-weighted
+   averaging left 9 normals pointing almost backwards (the specks).
+3. **Crease angle 50°** (`CONFIG["crease"]`). Walls meeting at a sharp outline corner (feet, tips, diamond)
+   get a crisp edge instead of one shared normal that shaded one wall dark (the ticks). Neighbouring points
+   that the inset pushes past each other are pulled together, and folded slivers under 2 units² are dropped.
+The Spline file's `Melange Mark` was rebuilt from the same data (3,887 vertices / 5,955 triangles); the old mesh
+is kept hidden as `Melange Mark (old, hidden)`.
+
 Material asset **`Melange Silver`**: `physical`, base `#9EA2A6`, **metalness 0.88, roughness 0.28**,
 smooth shading, plus a **`Brushed Steel` texture layer** — drawn locally with `generateTexture` (1024px,
 cloudy radial blobs + soft long streaks), `projection: triplanar`, **alpha 0.42, repeat [2,2]**, also
