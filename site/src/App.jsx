@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import SunlitScene from './components/SunlitScene/SunlitScene.jsx';
+import SceneBoundary from './components/SceneBoundary/SceneBoundary.jsx';
 import LandingUI from './components/LandingUI/LandingUI.jsx';
 import ArrakisSection from './components/ArrakisSection/ArrakisSection.jsx';
 import MelangeSection from './components/MelangeSection/MelangeSection.jsx';
@@ -49,6 +50,7 @@ export default function App() {
   const [arrakisActive, setArrakisActive] = useState(false);
   const [melangeActive, setMelangeActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [atVerify, setAtVerify] = useState(false);
   const verifyRef = useRef(null);
   const allocationRef = useRef(null);
   const menuButtonRef = useRef(null);
@@ -106,6 +108,7 @@ export default function App() {
       // everything except the gallery's last photos, which slide up over it as the
       // row scrolls away
       const docked = Math.min(1, Math.max(0, (s.dock - 0.95) / 0.05));
+      root.style.setProperty('--dock', s.dock.toFixed(4)); // the still pillar, if the 3D scene can't run
       root.style.setProperty('--mark-show', docked.toFixed(4));
       root.classList.toggle('mark-docked', docked > 0.01); // the logo can be clicked once it's there
       root.classList.toggle('mark-under', s.y > window.innerHeight * 8.7 && galleryOverLogo());
@@ -217,8 +220,17 @@ export default function App() {
     if (typeof grade === 'string') a?.circleGrade(grade);
     travel(a?.section, how, () => a?.focusInput());
   }, [travel]);
-  // Verify's "Don't have a code?": Allocation is just above, so it glides there
-  const allocationFromVerify = useCallback(() => openAllocation(null, 'glide'), [openAllocation]);
+  // Verify's "Don't have a code?" and a lapsed certificate's fresh allocation (with its
+  // grade circled): Allocation is just above, so it glides there
+  const allocationFromVerify = useCallback((grade) => openAllocation(grade ?? null, 'glide'), [openAllocation]);
+  // the header's "Verify a consignment" steps aside while you're already there
+  useEffect(() => {
+    const el = verifyRef.current?.section;
+    if (!el) return undefined;
+    const io = new IntersectionObserver(([e]) => setAtVerify(e.intersectionRatio > 0.4), { threshold: [0, 0.4, 1] });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   // the docked logo takes you back to the landing
   const toLanding = useCallback(() => travel(0, 'fade'), [travel]);
   // keep each Verify result in view as the section grows or shrinks
@@ -281,7 +293,9 @@ export default function App() {
 
   return (
     <>
-      <SunlitScene clock={clock} reducedMotion={reducedMotion} />
+      <SceneBoundary>
+        <SunlitScene clock={clock} reducedMotion={reducedMotion} />
+      </SceneBoundary>
       <div className="film-grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
       <div className="topbar-fade" aria-hidden="true" />
@@ -295,6 +309,7 @@ export default function App() {
         onMenu={() => setMenuOpen(true)}
         menuButtonRef={menuButtonRef}
         onVerify={() => openVerify('fade')}
+        atVerify={atVerify}
       />
       <div className="track">
         <section className="track__arrival" id="arrival" aria-label="Arrival" />

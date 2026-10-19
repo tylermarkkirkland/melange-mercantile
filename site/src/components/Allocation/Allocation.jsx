@@ -129,7 +129,13 @@ const Allocation = forwardRef(function Allocation(props, ref) {
     const onResize = () => press?.resize();
     const build = () => {
       if (press) return;
-      press = createSealPress(canvasRef.current, { reducedMotion: prefersReducedMotion() });
+      // without WebGL the letter still folds and sends, just without the press
+      try {
+        press = createSealPress(canvasRef.current, { reducedMotion: prefersReducedMotion() });
+      } catch (err) {
+        console.warn('Melange Mercantile: the seal press could not start.', err);
+        return;
+      }
       pressRef.current = press;
       if (import.meta.env.DEV) window.__sealPress = press; // poseAt(ms) for reviewing frames
       window.addEventListener('resize', onResize);
