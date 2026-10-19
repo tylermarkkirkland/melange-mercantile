@@ -1,9 +1,12 @@
 // Folding the sealed request into an envelope. The sheet on the page is copied
 // into paper panels that fold like the back of a classic envelope:
-//   1. the left and right sides fold in to meet in the middle,
-//   2. the top corners tuck away behind along the diagonals, leaving a triangle,
+//   1. the left and right sides fold in, all the way up, to meet in the middle,
+//   2. the top corners fold in onto the flap along lines from its point, taking the
+//      side flap lying on them with them, so the flap comes to a point,
 //   3. the bottom folds up into the pocket,
-//   4. the triangle folds down over the front as the flap.
+//   4. the flap folds down over the front, carrying everything folded onto it.
+// Every piece stays attached to the paper it belongs to and ends up tucked under
+// another layer; nothing fades or disappears.
 // The seal then goes on the flap's point, and the envelope slides off the page.
 //
 // Lighting: one light from the upper left, as on the rest of the site. Every
@@ -103,6 +106,16 @@ const turnAbout = (kx, ky, sign) => (p) => {
   return [ky * Math.sin(a), -kx * Math.sin(a), Math.cos(a)];
 };
 
+
+// Where a point lands when the paper is folded flat along the line from p to q
+function reflect([x, y], [px0, py0], [qx, qy]) {
+  const dx = qx - px0;
+  const dy = qy - py0;
+  const k = ((x - px0) * dx + (y - py0) * dy) / (dx * dx + dy * dy);
+  return [2 * (px0 + k * dx) - x, 2 * (py0 + k * dy) - y];
+}
+const poly = (pts, w, h) => `polygon(${pts.map(([x, y]) => `${pct(x / w)} ${pct(y / h)}`).join(', ')})`;
+
 /**
  * Build the fold over the sheet. `layer` is a positioned element covering the
  * same box as `frame`; the folding paper is drawn into it.
@@ -122,6 +135,17 @@ export function createFold({ frame, paper, layer }) {
   const t = H * TOP;
   const m = H * BODY;
   const b = H - t - m;
+  const half = Wc / 2;
+  const cx = a + half; // the envelope's centre line
+
+  // The flap's corners fold in along lines from its point to a little way down each
+  // side, chosen so a folded corner just reaches the crease and never overhangs it
+  const q = Math.min(t, (half * (half - Math.sqrt(Math.max(0, half * half - t * t)))) / t || t);
+  const P = [cx, 0]; // the flap's point
+  const QL = [a, q]; // where the fold lines meet the sides
+  const QR = [a + Wc, q];
+  const landL = reflect([a, 0], P, QL); // where each corner's tip lands on the flap
+  const landR = reflect([a + Wc, 0], P, QR);
 
   // the perspective lives on the outer box; everything inside shares one 3D space
   const root = div('alloc__fold', { left: px(left), top: px(top), width: px(W), height: px(H) });
@@ -132,103 +156,144 @@ export function createFold({ frame, paper, layer }) {
   const envShadow = div('alloc__fold-shadow', { left: px(a), top: px(t), width: px(Wc), height: px(m), transform: 'translateZ(-2px)' });
   stage.appendChild(envShadow);
 
-  const turns = []; // { el, from, to, normalAt, delay, faces: [{ el, back }], extra }
-  const casts = []; // { el, axis, sign, reach, delay } shadows thrown by a turning flap
+  const sideTurns = []; // the first stage: every side flap, left then right
+  const sideCasts = [];
 
-  // A soft shadow on the paper where a flap will land, thrown by the flap as it turns
+  // A piece of paper: an inert copy of the sheet seen through `box` (paper coordinates),
+  // placed at `at` inside its parent, cut to `clip` on the front and `backClip` behind
+  const piece = (parent, { at, box, origin, clip, backClip, backClass, className = 'alloc__flap' }) => {
+    const el = div(className, { left: px(at[0]), top: px(at[1]), width: px(box[2]), height: px(box[3]), transformOrigin: origin });
+    const front = face('alloc__face--front', copyOf(paper, W, H, -box[0], -box[1]), clip);
+    const back = face(`alloc__face--back ${backClass}`, null, backClip);
+    el.appendChild(front);
+    el.appendChild(back);
+    parent.appendChild(el);
+    return { el, front, back };
+  };
+
+  // A soft shadow on the paper where a flap will land, thrown by the flap as it turns.
   // (the shape is cut on an inner layer, so the blur on the outer one softens its edges)
-  const castShadow = (parent, style, origin, axis, reach, z, clip) => {
-    const el = div('alloc__cast', { ...style, transformOrigin: origin, transform: `translateZ(${z}px)` });
+  const castShadow = (parent, { at, w, h, origin, axis, reach, z, clip }) => {
+    const el = div('alloc__cast', { left: px(at[0]), top: px(at[1]), width: px(w), height: px(h), transformOrigin: origin, transform: `translateZ(${z}px)` });
     el.appendChild(div('alloc__cast-ink', clip ? { clipPath: clip } : {}));
     parent.appendChild(el);
     return { el, axis, reach, z };
   };
 
-  // body and bottom: each with its own side flaps, which fold in first
+  // A side flap: it folds in over its parent, toward the reader, landing a hair above
+  const sideFlap = (parent, side, { at, box, clip, backClip }) => {
+    const sign = side === 'l' ? 1 : -1;
+    const p = piece(parent, { at, box, origin: side === 'l' ? '100% 50%' : '0% 50%', clip, backClip, backClass: 'alloc__face--y' });
+    sideTurns.push({
+      el: p.el, delay: side === 'l' ? 0 : STAGGER,
+      from: 'rotateY(0deg) translateZ(0px)', to: `rotateY(${sign * 180}deg) translateZ(-1px)`,
+      normalAt: turnY(sign),
+      faces: [{ el: p.front, back: false }, { el: p.back, back: true }],
+    });
+    return p;
+  };
+
+  // ---------- the body and the bottom: bands with plain rectangular side flaps ----------
   const band = (y, h, origin) => {
     const panel = div('alloc__panel', { left: px(a), top: px(y), width: px(Wc), height: px(h), transformOrigin: origin });
     const front = face('alloc__face--front', copyOf(paper, W, H, -a, -y));
     const back = face('alloc__face--back alloc__face--x');
     panel.appendChild(front);
     panel.appendChild(back);
-    const sideFlaps = [];
+    const flaps = [];
     if (a > 0) {
-      ['l', 'r'].forEach((side, i) => {
-        const flap = div('alloc__flap', {
-          left: side === 'l' ? px(-a) : px(Wc), top: '0px', width: px(a), height: '100%',
-          transformOrigin: side === 'l' ? '100% 50%' : '0% 50%',
-        });
-        const flapFront = face('alloc__face--front', copyOf(paper, W, H, side === 'l' ? 0 : -(a + Wc), -y));
-        const flapBack = face('alloc__face--back alloc__face--y');
-        flap.appendChild(flapFront);
-        flap.appendChild(flapBack);
-        panel.appendChild(flap);
-        const sign = side === 'l' ? 1 : -1;
-        const delay = i * STAGGER;
-        turns.push({
-          el: flap, delay,
-          from: 'rotateY(0deg) translateZ(0px)',
-          to: `rotateY(${sign * 180}deg) translateZ(-1px)`,
-          normalAt: turnY(sign),
-          faces: [{ el: flapFront, back: false }, { el: flapBack, back: true }],
-        });
-        // its shadow falls on the band's own front, where it will land
+      for (const side of ['l', 'r']) {
+        flaps.push(sideFlap(panel, side, { at: [side === 'l' ? -a : Wc, 0], box: [side === 'l' ? 0 : a + Wc, y, a, h] }));
         const cast = castShadow(panel, {
-          left: side === 'l' ? '0px' : px(Wc - a), top: '0px', width: px(a), height: '100%',
-        }, side === 'l' ? '0% 50%' : '100% 50%', 'x', a, 0.5);
-        casts.push({ ...cast, sign, delay });
-        sideFlaps.push(flapBack);
-      });
+          at: [side === 'l' ? 0 : Wc - a, 0], w: a, h, origin: side === 'l' ? '0% 50%' : '100% 50%', axis: 'x', reach: a, z: 0.5,
+        });
+        sideCasts.push({ ...cast, sign: side === 'l' ? 1 : -1, delay: side === 'l' ? 0 : STAGGER });
+      }
     }
     stage.appendChild(panel);
-    return { panel, front, back, sideFlaps };
+    return { panel, front, back, flaps };
   };
-  band(t, m, '50% 50%');
+  const body = band(t, m, '50% 50%');
   const bottom = band(t + m, b, '50% 0%');
+  // "Yours in trade" straddles the pocket's crease, so the tops of its letters sit on the
+  // body's last pixel row and peeked out along the envelope's lower edge. The body's
+  // writing is covered by the side flaps once folded, so it's cut a hair short there.
+  body.front.style.clipPath = 'inset(0 0 2px 0)';
 
-  // the top: a triangle on the envelope's width, its point at the top centre.
-  // The corners either side tuck away behind it along the diagonals.
-  const l = a / W; // where the envelope's sides fall, as fractions of the width
-  const r = (a + Wc) / W;
-  const flapPanel = div('alloc__panel', { left: '0px', top: '0px', width: px(W), height: px(t), transformOrigin: '50% 100%' });
-  const flapFront = face('alloc__face--front', copyOf(paper, W, H, 0, 0), `polygon(${pct(l)} 100%, 50% 0%, ${pct(r)} 100%)`);
-  const flapBack = face('alloc__face--back alloc__face--x', null, `polygon(${pct(l)} 0%, ${pct(r)} 0%, 50% 100%)`);
-  flapPanel.appendChild(flapFront);
-  flapPanel.appendChild(flapBack);
-  stage.appendChild(flapPanel);
+  // ---------- the top: the flap, its folded-in corners, and the side flaps above the body ----------
+  // In the flap's own box (the sheet's full width, t tall, at the sheet's top left)
+  const flap = div('alloc__panel', { left: '0px', top: '0px', width: px(W), height: px(t), transformOrigin: '50% 100%' });
+  const flapShape = [P, QL, [a, t], [a + Wc, t], QR];
+  const mirrorY = (pts) => pts.map(([x, y]) => [x, t - y]);
+  const flapFront = face('alloc__face--front', copyOf(paper, W, H, 0, 0), poly(flapShape, W, t));
+  const flapBack = face('alloc__face--back alloc__face--x', null, poly(mirrorY(flapShape), W, t));
+  flap.appendChild(flapFront);
+  flap.appendChild(flapBack);
+  stage.appendChild(flap);
 
-  const corners = ['l', 'r'].map((side, i) => {
-    const clip = side === 'l'
-      ? `polygon(0% 0%, 50% 0%, ${pct(l)} 100%, 0% 100%)`
-      : `polygon(50% 0%, 100% 0%, 100% 100%, ${pct(r)} 100%)`;
-    // the back is flipped about the corner piece's centre line, so its outline is mirrored
-    const backClip = side === 'l'
-      ? `polygon(100% 0%, 50% 0%, ${pct(1 - l)} 100%, 100% 100%)`
-      : `polygon(50% 0%, 0% 0%, 0% 100%, ${pct(1 - r)} 100%)`;
-    const corner = div('alloc__corner', { left: '0px', top: '0px', width: px(W), height: px(t), transformOrigin: '50% 0%' });
-    const front = face('alloc__face--front', copyOf(paper, W, H, 0, 0), clip);
-    // its back, seen only as it tucks away: mirrored by the same flip as the corner
-    const back = face('alloc__face--back alloc__face--corner', null, backClip);
-    corner.appendChild(front);
-    corner.appendChild(back);
-    stage.appendChild(corner);
-    // the hinge runs from the point at the top centre down to the envelope's side
-    const ax = side === 'l' ? a - W / 2 : a + Wc - W / 2;
-    const len = Math.hypot(ax, t);
-    const sign = ax < 0 ? -1 : 1; // both corners turn away from the reader
-    turns.push({
-      el: corner, delay: i * STAGGER, duration: FOLD_MS * 0.85,
-      from: `rotate3d(${ax}, ${t}, 0, 0deg)`,
-      to: `rotate3d(${ax}, ${t}, 0, ${sign * 180}deg)`,
-      normalAt: turnAbout(ax / len, t / len, sign),
-      faces: [{ el: front, back: false }, { el: back, back: true }],
+  const corners = [];
+  for (const side of ['l', 'r']) {
+    const Q = side === 'l' ? QL : QR;
+    const edge = side === 'l' ? a : a + Wc;
+    const land = side === 'l' ? landL : landR;
+    // the corner of the flap above its fold line, in the flap's box
+    const cornerShape = [[edge, 0], P, Q];
+    const mirrorX = (pts) => pts.map(([x, y]) => [W - x, y]);
+    const corner = piece(flap, {
+      at: [0, 0], box: [0, 0, W, t], origin: `${pct(cx / W)} 0%`,
+      clip: poly(cornerShape, W, t), backClip: poly(mirrorX(cornerShape), W, t), backClass: 'alloc__face--corner',
+      className: 'alloc__corner',
     });
-    return corner;
-  });
 
-  // the bottom flap's shadow on the body, and the top flap's on the closed pocket and body
-  const bottomCast = castShadow(stage, { left: px(a), top: px(t + m - b), width: px(Wc), height: px(b) }, '50% 100%', 'y', b, 1.5);
-  const flapCast = castShadow(stage, { left: px(a), top: px(t), width: px(Wc), height: px(t) }, '50% 0%', 'y', t, 3.5, 'polygon(0% 0%, 100% 0%, 50% 100%)');
+    if (a > 0) {
+      // the side flap above the body is split by the corner's fold line: the part lying on
+      // the corner goes with the corner, the rest stays on the flap
+      const flapBox = [side === 'l' ? 0 : a + Wc, 0, a, t];
+      const at = [flapBox[0], 0];
+      const qq = q / t; // where the fold line crosses, as a fraction of the height
+      const onCorner = side === 'l'
+        ? { clip: `polygon(0% 0%, 100% 0%, 100% ${pct(qq)})`, backClip: `polygon(100% 0%, 0% 0%, 0% ${pct(qq)})` }
+        : { clip: `polygon(0% 0%, 100% 0%, 0% ${pct(qq)})`, backClip: `polygon(100% 0%, 0% 0%, 100% ${pct(qq)})` };
+      const onFlap = side === 'l'
+        ? { clip: `polygon(0% 0%, 100% ${pct(qq)}, 100% 100%, 0% 100%)`, backClip: `polygon(100% 0%, 0% ${pct(qq)}, 0% 100%, 100% 100%)` }
+        : { clip: `polygon(100% 0%, 0% ${pct(qq)}, 0% 100%, 100% 100%)`, backClip: `polygon(0% 0%, 100% ${pct(qq)}, 100% 100%, 0% 100%)` };
+      const sa = sideFlap(corner.el, side, { at, box: flapBox, ...onCorner });
+      sideFlap(flap, side, { at, box: flapBox, ...onFlap });
+      // their shadows: on the corner, and on the flap below the fold line
+      const landX = side === 'l' ? a : 2 * a;
+      const castOnCorner = castShadow(corner.el, {
+        at: [landX, 0], w: a, h: t, origin: side === 'l' ? '0% 50%' : '100% 50%', axis: 'x', reach: a, z: 0.5,
+        clip: side === 'l' ? `polygon(0% 0%, 100% 0%, 0% ${pct(qq)})` : `polygon(0% 0%, 100% 0%, 100% ${pct(qq)})`,
+      });
+      const castOnFlap = castShadow(flap, {
+        at: [landX, 0], w: a, h: t, origin: side === 'l' ? '0% 50%' : '100% 50%', axis: 'x', reach: a, z: 0.5,
+        clip: side === 'l' ? `polygon(100% 0%, 100% 100%, 0% 100%, 0% ${pct(qq)})` : `polygon(0% 0%, 100% ${pct(qq)}, 100% 100%, 0% 100%)`,
+      });
+      const sign = side === 'l' ? 1 : -1;
+      const delay = side === 'l' ? 0 : STAGGER;
+      sideCasts.push({ ...castOnCorner, sign, delay }, { ...castOnFlap, sign, delay });
+      corner.sideOnIt = sa;
+    }
+
+    // the corner's own shadow on the flap, where its tip lands
+    const cast = castShadow(flap, {
+      at: [0, 0], w: W, h: t, origin: '50% 0%', axis: 'none', reach: Math.hypot(land[0] - edge, land[1]), z: 2.5,
+      clip: poly([P, Q, land], W, t),
+    });
+
+    // it turns over toward the reader about its fold line, coming to rest on the flap
+    const ax = Q[0] - P[0];
+    const ay = Q[1] - P[1];
+    const len = Math.hypot(ax, ay);
+    const sign = side === 'l' ? 1 : -1;
+    corners.push({ ...corner, side, ax, ay, len, sign, cast });
+  }
+
+  const bottomCast = castShadow(stage, { at: [a, t + m - b], w: Wc, h: b, origin: '50% 100%', axis: 'y', reach: b, z: 1.5 });
+  const flapCast = castShadow(stage, {
+    at: [a, t], w: Wc, h: t, origin: '50% 0%', axis: 'y', reach: t, z: 3.5,
+    clip: poly(mirrorY(flapShape).map(([x, y]) => [x - a, y]), Wc, t),
+  });
 
   layer.appendChild(root);
 
@@ -250,6 +315,13 @@ export function createFold({ frame, paper, layer }) {
     return anim;
   };
 
+  // a face already folded over keeps turning with whatever it lies on
+  const shadeAlong = (faceEl, normalAt, delay, duration = FOLD_MS) => {
+    const overlay = div('alloc__shade');
+    faceEl.appendChild(overlay);
+    animate(overlay, lightingFrames(normalAt, false).dark, delay, duration);
+  };
+
   // a flap's shadow: none while it stands on its own side, then thrown across as it
   // comes over, softest at its height, gathering into a contact shadow as it lands
   const playCast = ({ el, axis, reach, z }, sign, delay, duration = FOLD_MS) => {
@@ -262,21 +334,14 @@ export function createFold({ frame, paper, layer }) {
       const drift = reach * 0.08 * lift;
       const dx = SHADOW_DIR[0] * drift * (axis === 'x' ? sign : 1);
       const dy = SHADOW_DIR[1] * drift;
-      const scale = axis === 'x' ? `scaleX(${spread})` : `scaleY(${spread})`;
+      const scale = axis === 'x' ? ` scaleX(${spread})` : axis === 'y' ? ` scaleY(${spread})` : '';
       frames.push({
-        transform: `translate3d(${px(dx)}, ${px(dy)}, ${z}px) ${scale}`,
+        transform: `translate3d(${px(dx)}, ${px(dy)}, ${z}px)${scale}`,
         opacity: 0.5 * over * (0.55 + 0.45 * (1 - lift)),
         filter: `blur(${px(1.5 + 22 * lift)})`,
       });
     }
     return animate(el, frames, delay, duration);
-  };
-
-  const timeline = () => {
-    const sidesDone = FOLD_MS + STAGGER;
-    const bottomAt = a > 0 ? sidesDone - 120 : 0;
-    const flapAt = bottomAt + FOLD_MS - 140;
-    return { bottomAt, flapAt };
   };
 
   return {
@@ -289,37 +354,51 @@ export function createFold({ frame, paper, layer }) {
 
     /** fold the sheet; resolves when the envelope is closed */
     fold() {
-      const { bottomAt, flapAt } = timeline();
-      turns.forEach(playTurn);
-      casts.forEach((c) => playCast(c, c.sign, c.delay));
-      // the corners slip away behind the sheet as they start to turn, rather than
-      // swinging out across the empty page
-      corners.forEach((el, i) => animate(el, [{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0, offset: 0.42 }, { opacity: 0, offset: 1 }], i * STAGGER, FOLD_MS * 0.85));
+      // 1. the sides, left then right, all the way up
+      sideTurns.forEach(playTurn);
+      sideCasts.forEach((c) => playCast(c, c.sign, c.delay));
 
-      // the bottom folds up into the pocket, carrying its side flaps with it
+      // 2. the flap's corners fold in onto it, each with the side flap lying on it
+      const cornersAt = a > 0 ? FOLD_MS + STAGGER - 160 : 0;
+      const CORNER_MS = FOLD_MS * 0.85;
+      corners.forEach(({ el, front, back, ax, ay, len, sign, cast, sideOnIt }, i) => {
+        const delay = cornersAt + i * STAGGER;
+        const normalAt = turnAbout(ax / len, ay / len, sign);
+        playTurn({
+          el, delay, duration: CORNER_MS,
+          from: `rotate3d(${ax}, ${ay}, 0, 0deg) translateZ(0px)`,
+          to: `rotate3d(${ax}, ${ay}, 0, ${sign * 180}deg) translateZ(-3px)`,
+          normalAt,
+          faces: [{ el: front, back: false }, { el: back, back: true }],
+        });
+        if (sideOnIt) shadeAlong(sideOnIt.back, normalAt, delay, CORNER_MS);
+        playCast(cast, 1, delay, CORNER_MS);
+      });
+
+      // 3. the bottom folds up into the pocket, carrying its side flaps with it
+      const bottomAt = cornersAt + STAGGER + CORNER_MS - 160;
       playTurn({
         el: bottom.panel, delay: bottomAt,
         from: 'rotateX(0deg) translateZ(0px)', to: 'rotateX(180deg) translateZ(-3px)',
         normalAt: turnX(1),
         faces: [{ el: bottom.front, back: false }, { el: bottom.back, back: true }],
       });
-      // its folded side flaps tilt with it, and once it has turned past upright they
-      // are underneath it for good (hidden, so no sliver of their writing peeks out at the crease)
-      for (const flapBackFace of bottom.sideFlaps) {
-        const { dark } = lightingFrames(turnX(1), false);
-        const overlay = div('alloc__shade');
-        flapBackFace.appendChild(overlay);
-        animate(overlay, dark, bottomAt);
-        animate(flapBackFace.parentElement, [{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0, offset: 0.52 }, { opacity: 0, offset: 1 }], bottomAt);
+      for (const f of bottom.flaps) {
+        shadeAlong(f.back, turnX(1), bottomAt);
+        // once the pocket is past upright they're underneath it; dropping them at the exact
+        // moment it's edge-on shows nothing, and stops a sliver of writing peeking at the crease.
+        // (visibility, not opacity: animating opacity on folded paper flattens its 3D)
+        animate(f.el, [{ visibility: 'visible', offset: 0 }, { visibility: 'visible', offset: 0.5 }, { visibility: 'hidden', offset: 0.5 }, { visibility: 'hidden', offset: 1 }], bottomAt);
       }
       playCast(bottomCast, 1, bottomAt);
       animate(envShadow, [{ opacity: 0 }, { opacity: 1 }], bottomAt, FOLD_MS * 2);
 
-      // and the triangle comes down over it all
+      // 4. and the flap comes down over it all, carrying everything folded onto it
+      const flapAt = bottomAt + FOLD_MS - 140;
       playCast(flapCast, 1, flapAt);
       return playTurn({
-        el: flapPanel, delay: flapAt,
-        from: 'rotateX(0deg) translateZ(0px)', to: 'rotateX(-180deg) translateZ(-5px)',
+        el: flap, delay: flapAt,
+        from: 'rotateX(0deg) translateZ(0px)', to: 'rotateX(-180deg) translateZ(-8px)',
         normalAt: turnX(-1),
         faces: [{ el: flapFront, back: false }, { el: flapBack, back: true }],
       }).finished;

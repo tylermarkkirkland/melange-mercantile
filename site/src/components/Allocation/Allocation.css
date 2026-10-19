@@ -527,6 +527,13 @@
   backface-visibility: hidden;
 }
 
+/* everything printed on a face turns away with it: the copied letter inside sits on
+   its own layer, which would otherwise leak a hairline of text at the creases */
+.alloc__face * {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 .alloc__face--x { transform: rotateX(180deg); }
 .alloc__face--y,
 .alloc__face--corner { transform: rotateY(180deg); }
@@ -537,6 +544,16 @@
     radial-gradient(ellipse 80% 90% at 40% 35%, rgba(255, 248, 230, 0.28), transparent 70%),
     #d9c79f;
   box-shadow: inset 0 0 40px rgba(110, 72, 28, 0.32), inset 0 0 0 1px rgba(90, 58, 22, 0.25);
+}
+
+/* folded paper has a little thickness at the crease: the backs of the side flaps and
+   the pocket reach a hair past their edges, so no hairline of writing beneath shows */
+.alloc__flap > .alloc__face--back,
+.alloc__panel > .alloc__face--back {
+  box-shadow:
+    inset 0 0 40px rgba(110, 72, 28, 0.32),
+    inset 0 0 0 1px rgba(90, 58, 22, 0.25),
+    0 0 0 1.5px #cdb98f;
 }
 
 /* each face's shading from the light: a deep warm brown as it turns away,
