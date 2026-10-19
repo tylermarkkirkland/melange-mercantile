@@ -505,6 +505,13 @@
   perspective: 2400px;
 }
 
+/* one 3D space for every piece of paper, so they sort by depth */
+.alloc__stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
 .alloc__panel,
 .alloc__flap,
 .alloc__corner {
@@ -521,7 +528,8 @@
 }
 
 .alloc__face--x { transform: rotateX(180deg); }
-.alloc__face--y { transform: rotateY(180deg); }
+.alloc__face--y,
+.alloc__face--corner { transform: rotateY(180deg); }
 
 /* the back of the sheet: plain parchment, a shade darker than the written side */
 .alloc__face--back {
@@ -531,12 +539,30 @@
   box-shadow: inset 0 0 40px rgba(110, 72, 28, 0.32), inset 0 0 0 1px rgba(90, 58, 22, 0.25);
 }
 
-.alloc__shade {
+/* each face's shading from the light: a deep warm brown as it turns away,
+   a warm highlight as it turns toward the light */
+.alloc__shade,
+.alloc__light {
   position: absolute;
   inset: 0;
-  background: #2a1c0a;
   opacity: 0;
   pointer-events: none;
+}
+
+.alloc__shade { background: #241808; }
+.alloc__light { background: #fff6e2; }
+
+/* the shadow a turning flap throws onto the paper beneath it */
+.alloc__cast {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alloc__cast-ink {
+  position: absolute;
+  inset: 0;
+  background: #1c1206;
 }
 
 .alloc__fold-shadow {
