@@ -7,8 +7,7 @@ export const ALLOCATION_COPY = {
   closing: 'Yours in trade,',
   submit: 'Seal and send',
   sealing: 'Sealing your letter…',
-  gradeLegend: 'Circle one grade',
-  gradeLegendTick: 'Tick one grade',
+  gradeLegend: 'Tick one grade',
 };
 
 // the grades themselves live in data/reserve.js
@@ -28,10 +27,7 @@ export const FIELDS = {
     hint: 'Add an address with an @ in it',
   },
   grade: {
-    caption: 'Choose a grade',
-    placeholder: 'which grade',
-    hint: 'Choose one of the four grades',
-    hintTick: 'Tick one of the four grades',
+    hint: 'Tick one of the four grades',
   },
   name: {
     caption: 'Your name or House',
@@ -41,6 +37,14 @@ export const FIELDS = {
 };
 
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+// Filled in when the fold is replayed (?replay) on an unfinished letter
+export const SAMPLE_LETTER = {
+  grade: 'House Select',
+  destination: 'Caladan',
+  email: 'steward@atreides.house',
+  name: 'House Atreides',
+};
 
 // A believable reference number for the reply
 export const makeReference = () => `MM-REQ-${String(Math.floor(1000 + Math.random() * 8999))}`;

@@ -9,7 +9,7 @@ const EASE = [0.16, 1, 0.3, 1];
 /**
  * The Reserve: what a House can have. One photograph of the four grades in their
  * vessels, finest to rawest, then the four grades beneath it in the same order,
- * purity leading. "Request" opens the Allocation letter with that grade circled.
+ * purity leading. "Request" opens the Allocation letter with that grade ticked.
  */
 export default function ReserveSection({ onRequest }) {
   const reduced = useReducedMotion();

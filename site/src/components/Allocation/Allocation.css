@@ -262,7 +262,7 @@
 
 .alloc.is-sending .alloc__caption { opacity: 0.5; }
 
-/* ---------- grades: a printed "circle one" line ---------- */
+/* ---------- grades: a printed line of tick boxes ---------- */
 .alloc__grades {
   margin: 32px -24px 0; /* a little wider than the text column, so all four fit on one line */
   padding: 0;
@@ -312,30 +312,6 @@
   color: var(--ink-soft);
 }
 
-.alloc__loop {
-  position: absolute;
-  top: 2px;
-  left: -8px;
-  width: calc(100% + 16px);
-  height: calc(100% - 4px);
-  overflow: visible;
-  pointer-events: none;
-}
-
-.alloc__loop path {
-  fill: none;
-  stroke: var(--hand);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  opacity: 0; /* hidden outright, or the pen's round tip shows at the start */
-  transition: stroke-dashoffset 0.7s cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-.alloc__grade.is-marked .alloc__loop path { stroke-dashoffset: 0; opacity: 1; }
-
 .alloc__grade:has(input:focus-visible) {
   outline: 1px dashed var(--ink);
   outline-offset: -2px;
@@ -349,29 +325,10 @@
   text-align: center;
 }
 
-/* Option A: the grade is a blank in the sentence. It's a button that opens the grades. */
-.alloc__blank--grade { width: 8.5em; }
-
-.alloc__pick {
-  display: block;
-  text-align: left;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.alloc__pick.is-empty { color: rgba(7, 10, 12, 0.28); } /* faint, like the other blanks' examples */
-.alloc__pick:not(:disabled):hover { border-bottom-color: var(--ink); }
-.alloc__pick:disabled { cursor: default; }
-
-/* the grades open beneath the grade's blank, clear of its printed caption */
-.alloc__grades--a { margin-top: 24px; animation: hint-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* Option B: printed tick boxes, ahead of the request */
-.alloc__grades--b { margin-top: 20px; }
-.alloc__grades--b .alloc__grade { padding: 8px 10px; gap: 8px; }
-.alloc__grades--b .alloc__grade + .alloc__grade::before { left: -3px; }
+/* printed tick boxes, ahead of the request */
+.alloc__grades { margin-top: 20px; }
+.alloc__grades .alloc__grade { padding: 8px 10px; gap: 8px; }
+.alloc__grades .alloc__grade + .alloc__grade::before { left: -3px; }
 .alloc__grade-name { white-space: nowrap; }
 
 /* a blank and the punctuation after it stay on one line */
@@ -409,6 +366,23 @@
 }
 
 .alloc__grade.is-marked .alloc__box path { stroke-dashoffset: 0; opacity: 1; }
+
+/* ?replay: a pencilled note in the corner of the sheet, for reviewing the send */
+.alloc__replay {
+  position: absolute;
+  right: 24px;
+  bottom: 28px;
+  z-index: 4;
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 1px dashed var(--ink);
+  cursor: pointer;
+  font: italic 500 18px/1 'Cormorant Garamond', Georgia, serif;
+  color: var(--ink);
+}
+
+.alloc__replay:disabled { opacity: 0; pointer-events: none; }
 
 /* ---------- sending: the letter folds, is sealed, and leaves the page ---------- */
 .alloc__dispatch {
@@ -612,14 +586,11 @@
   .alloc__seal-spot { grid-row: 2; height: 168px; margin-top: 40px; }
   .alloc__submit { width: 100%; }
   .alloc__ref { display: block; margin: 0; }
-  .alloc__blank--grade { display: block; width: 100%; margin: 4px 0 32px; }
-  .alloc__grades--b .alloc__grade-row { align-items: flex-start; }
+  .alloc__grade-row { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alloc__loop path { transition: none; }
   .alloc__receipt,
-  .alloc__grades--a,
   .alloc__box path,
   .alloc__hint { animation: none; transition: none; }
 }
