@@ -1,0 +1,27 @@
+/* stands where .sunlit-scene would: fixed behind everything, on black */
+.scene-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #000;
+}
+
+/* the pillar where the 3D one stands on the landing (about 40% of the screen tall,
+   a little above centre); it fades as the page scrolls and the logo docks */
+.scene-fallback__mark {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 8.7vh);
+  height: 40vh;
+  transform: translate(-50%, -50%);
+  opacity: calc(1 - var(--dock, 0));
+  animation: fallback-in 1.6s ease both;
+}
+
+@keyframes fallback-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-fallback__mark { animation: none; }
+}

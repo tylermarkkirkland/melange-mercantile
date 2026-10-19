@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import SunlitScene from './components/SunlitScene/SunlitScene.jsx';
+import SceneBoundary from './components/SceneBoundary/SceneBoundary.jsx';
 import LandingUI from './components/LandingUI/LandingUI.jsx';
 import ArrakisSection from './components/ArrakisSection/ArrakisSection.jsx';
 import MelangeSection from './components/MelangeSection/MelangeSection.jsx';
@@ -107,6 +108,7 @@ export default function App() {
       // everything except the gallery's last photos, which slide up over it as the
       // row scrolls away
       const docked = Math.min(1, Math.max(0, (s.dock - 0.95) / 0.05));
+      root.style.setProperty('--dock', s.dock.toFixed(4)); // the still pillar, if the 3D scene can't run
       root.style.setProperty('--mark-show', docked.toFixed(4));
       root.classList.toggle('mark-docked', docked > 0.01); // the logo can be clicked once it's there
       root.classList.toggle('mark-under', s.y > window.innerHeight * 8.7 && galleryOverLogo());
@@ -291,7 +293,9 @@ export default function App() {
 
   return (
     <>
-      <SunlitScene clock={clock} reducedMotion={reducedMotion} />
+      <SceneBoundary>
+        <SunlitScene clock={clock} reducedMotion={reducedMotion} />
+      </SceneBoundary>
       <div className="film-grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
       <div className="topbar-fade" aria-hidden="true" />

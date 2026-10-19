@@ -40,13 +40,20 @@ function Entry({ label, value, mono, i = 0 }) {
  * of The Passage signed in the ledger, and at the foot either the black wax seal
  * (guarantee active) or a stamp across it (guarantee lapsed).
  */
-function Certificate({ code, record, lapsed }) {
+function Certificate({ code, record, lapsed, titleRef }) {
+  // what a screen reader hears when the result arrives; the card says it visually
+  const summary = lapsed
+    ? `${code} is genuine. Its guarantee lapsed in ${record.guaranteeUntil}, so we no longer vouch for its condition.`
+    : `${code} is genuine, and its guarantee is active until ${record.guaranteeUntil}.`;
   return (
     <div className={`cert${lapsed ? ' is-lapsed' : ''}`}>
       <header className="cert__head">
         <img className="cert__mark" src="/models/pillar.svg" alt="" aria-hidden="true" />
         <p className="cert__house">{CERTIFICATE.house}</p>
-        <h3 className="cert__title">{CERTIFICATE.title}</h3>
+        <h2 className="cert__title" ref={titleRef} tabIndex={titleRef ? -1 : undefined}>
+          <span className="sr-only">{summary} </span>
+          {CERTIFICATE.title}
+        </h2>
         <p className="cert__attest">{CERTIFICATE.attest}</p>
       </header>
 
@@ -85,9 +92,12 @@ function Certificate({ code, record, lapsed }) {
         </div>
 
         {lapsed ? (
-          <div className="cert__stamp">
-            <span>Guarantee lapsed</span>
-            <span className="cert__stamp-date">{record.guaranteeUntil}</span>
+          <div className="cert__lapsed">
+            <div className="cert__stamp">
+              <span>Guarantee lapsed</span>
+              <span className="cert__stamp-date">{record.guaranteeUntil}</span>
+            </div>
+            <p className="cert__until">Genuine, and no longer vouched for</p>
           </div>
         ) : (
           <div className="cert__sealed">
@@ -247,23 +257,9 @@ const Verify = forwardRef(function Verify({ onResult, onRequestAllocation }, ref
           )}
 
           {(state === 'active' || state === 'lapsed') && record && (
-            <motion.article key={state} className="verify__result" {...screen} aria-labelledby="verify-result">
-              <header className="verify__result-head">
-                <p className="verify__eyebrow">{VERIFY_COPY.eyebrow} · {code}</p>
-                <h2 id="verify-result" ref={headingRef} tabIndex={-1} className="verify__result-title">
-                  {state === 'active'
-                    ? <><span>GENUINE AND</span> <span>GUARANTEED</span></>
-                    : <><span>GENUINE, NO LONGER</span> <span>GUARANTEED</span></>}
-                </h2>
-                {state === 'lapsed' && (
-                  <p className="verify__intro">
-                    Its twelve-year guarantee lapsed in {record.guaranteeUntil}, so we no longer vouch for its condition.
-                  </p>
-                )}
-              </header>
-
+            <motion.article key={state} className="verify__result" {...screen} aria-label={`Certificate of origin for ${code}`}>
               <motion.div className="verify__card" {...card}>
-                <Certificate code={code} record={record} lapsed={state === 'lapsed'} />
+                <Certificate code={code} record={record} lapsed={state === 'lapsed'} titleRef={headingRef} />
               </motion.div>
 
               <div className="verify__actions">
