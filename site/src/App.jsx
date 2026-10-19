@@ -49,6 +49,7 @@ export default function App() {
   const [arrakisActive, setArrakisActive] = useState(false);
   const [melangeActive, setMelangeActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [atVerify, setAtVerify] = useState(false);
   const verifyRef = useRef(null);
   const allocationRef = useRef(null);
   const menuButtonRef = useRef(null);
@@ -217,8 +218,17 @@ export default function App() {
     if (typeof grade === 'string') a?.circleGrade(grade);
     travel(a?.section, how, () => a?.focusInput());
   }, [travel]);
-  // Verify's "Don't have a code?": Allocation is just above, so it glides there
-  const allocationFromVerify = useCallback(() => openAllocation(null, 'glide'), [openAllocation]);
+  // Verify's "Don't have a code?" and a lapsed certificate's fresh allocation (with its
+  // grade circled): Allocation is just above, so it glides there
+  const allocationFromVerify = useCallback((grade) => openAllocation(grade ?? null, 'glide'), [openAllocation]);
+  // the header's "Verify a consignment" steps aside while you're already there
+  useEffect(() => {
+    const el = verifyRef.current?.section;
+    if (!el) return undefined;
+    const io = new IntersectionObserver(([e]) => setAtVerify(e.intersectionRatio > 0.4), { threshold: [0, 0.4, 1] });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   // the docked logo takes you back to the landing
   const toLanding = useCallback(() => travel(0, 'fade'), [travel]);
   // keep each Verify result in view as the section grows or shrinks
@@ -295,6 +305,7 @@ export default function App() {
         onMenu={() => setMenuOpen(true)}
         menuButtonRef={menuButtonRef}
         onVerify={() => openVerify('fade')}
+        atVerify={atVerify}
       />
       <div className="track">
         <section className="track__arrival" id="arrival" aria-label="Arrival" />

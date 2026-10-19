@@ -36,7 +36,7 @@ function RevealWord({ text, className, stagger, delay }) {
  * Interface layered over the scene.
  * phase: 'dark' | 'light' | 'wordmark' | 'interface'
  */
-export default function LandingUI({ phase, onSkip, menuOpen, onMenu, menuButtonRef, onVerify }) {
+export default function LandingUI({ phase, onSkip, menuOpen, onMenu, menuButtonRef, onVerify, atVerify = false }) {
   const showWordmark = phase === 'wordmark' || phase === 'interface';
   const showInterface = phase === 'interface';
 
@@ -55,14 +55,16 @@ export default function LandingUI({ phase, onSkip, menuOpen, onMenu, menuButtonR
           <span className="landing__menu-icon" aria-hidden="true" />
           <span className="landing__menu-label">{CONTENT.menu}</span>
         </motion.button>
-        <motion.a
-          className="landing__link"
-          href="#verify"
-          onClick={(e) => { e.preventDefault(); onVerify(); }}
-          variants={fade(0.35)}
-        >
-          {CONTENT.verifyLink}
-        </motion.a>
+        <span className={`landing__link-wrap${atVerify ? ' is-here' : ''}`}>
+          <motion.a
+            className="landing__link"
+            href="#verify"
+            onClick={(e) => { e.preventDefault(); onVerify(); }}
+            variants={fade(0.35)}
+          >
+            {CONTENT.verifyLink}
+          </motion.a>
+        </span>
       </motion.header>
 
       <div className="landing__fades">
