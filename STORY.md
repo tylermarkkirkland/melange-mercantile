@@ -166,9 +166,9 @@ comparison: purity as the hero number (Plex Mono), names in Cinzel, status as a 
 | Grade | Purity · Basin | Line | Tag |
 |---|---|---|---|
 | **Imperial Reserve** | 99.4% · Imperial Basin | **The Emperor's own grade, in every respect but the paperwork.** ✓ | By warrant |
-| **House Select** | 97.1% · Sihaya Ridge | **The standing grade of the Great Houses. They chose it, which is how it got its name.** | Available |
+| **House Select** | 97.1% · Sihaya Ridge | **The standing grade of the Great Houses. Pure enough for any House, short of the Emperor himself.** | Available |
 | **Guild Standard** | 94.8% · Hagga Basin | **Navigation grade. Good enough for the Spacing Guild, who are not easily pleased.** | By volume |
-| **Raw Harvest** | 88.2% · Cielago Deep | **Unrefined and sold by mass, still in the sand it was found in. For Houses that prefer to refine their own.** | By mass |
+| **Raw Harvest** | 88.2% · Cielago Deep | **Gathered from the open sand and sold before refining. For Houses that prefer to refine their own.** | By mass |
 
 | | Proposed |
 |---|---|
@@ -239,7 +239,7 @@ something odd (how a company sells an "Imperial" grade) with a wink rather than 
 | # | Photo | Today | Proposed |
 |---|---|---|---|
 | 1 | Wax seal | **Sealed**: Every consignment closed under House warrant. | **Sealed**: Assayed and sealed in wax where it was found. |
-| 2 | Tag on sack | *(was 5th)* **Traced**: Every sack tagged and accounted for. | **Traced**: Every sack tagged and entered in the ledger. |
+| 2 | Tag on sack | *(was 5th)* **Traced**: Every sack tagged and accounted for. | **Traced**: Every container tagged and entered in the ledger. |
 | 3 | Crate | *(was 2nd)* **Shipped**: Crated at origin. Opened only by the buyer. | **Crated**: Crated at origin. Opened only by the buyer. |
 | 4 | Ship hull | *(was 4th)* **Flown**: House vessels cross the deep desert. | **Lifted**: Carried by our frigates to a Guild heighliner. |
 | 5 | Banner in hall | *(was 3rd)* **Honoured**: Carried in the halls of the Great Houses. | **Received**: Delivered to the halls of the Great Houses. |
@@ -262,7 +262,7 @@ something odd (how a company sells an "Imperial" grade) with a wink rather than 
 | Eyebrow | Influence | **Discretion** |
 | Headline | THE HOUSE / ARRIVES | **NEVER ANNOUNCED, / NEVER LATE** ✓ |
 | Body | Trusted across the Imperium for our discretion, quality, and influence. | **Our ledger is open to CHOAM, and to no one else. Our clients are never named, and never need to be.** |
-| Data (new, small) | — | **0 seals broken in transit** |
+| Data (new, small) | — | *(removed: it crowded the layout)* |
 
 **Decided:** A, *NEVER ANNOUNCED, / NEVER LATE*: discretion and reliability, the two things a
 House needs from a supplier. The figures in the image are waiting, and it arrives on time.
@@ -309,7 +309,7 @@ House needs from a supplier. The figures in the image are waiting, and it arrive
 
 | | Today | Proposed |
 |---|---|---|
-| Intro | Your consignment code is stamped on the crate seal, the luggage tag and the certificate of origin. | **Your consignment code is pressed into the wax seal and stamped on the sack tag and the certificate of origin.** |
+| Intro | Your consignment code is stamped on the crate seal, the luggage tag and the certificate of origin. | **Your consignment code is engraved on the container's tag and printed on the certificate of origin.** |
 | Lookup | Consulting the House register | **Consulting the Melange Mercantile ledger** |
 
 *("Luggage tag" was a leftover from an earlier idea. The tag in the gallery is on a sack of melange.)*

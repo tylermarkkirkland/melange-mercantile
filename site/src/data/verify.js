@@ -3,7 +3,7 @@
 export const VERIFY_COPY = {
   eyebrow: 'Verify',
   title: 'VERIFY A CONSIGNMENT',
-  intro: 'Your consignment code is pressed into the wax seal and stamped on the sack tag and the certificate of origin.',
+  intro: "Your consignment code is engraved on the container's tag and printed on the certificate of origin.",
   label: 'Consignment code',
   placeholder: 'MM-000-Δ',
   hint: 'Codes are MM, three digits and a Greek letter, like MM-114-Δ. You can type D for Δ.',
@@ -56,7 +56,7 @@ export const REGISTER = {
     custody: [
       { when: '10,181 AG · 06:14', what: 'Harvested', detail: 'Imperial Basin, crew 14' },
       { when: '10,181 AG · 19:40', what: 'Assayed', detail: 'Reference 0X7F2A · purity 99.4%' },
-      { when: '10,181 AG · 22:05', what: 'Sealed by Melange Mercantile', detail: 'Seal MM-114-Δ' },
+      { when: '10,181 AG · 22:05', what: 'Sealed by Melange Mercantile', detail: 'Consignment MM-114-Δ' },
       { when: '10,182 AG · 03:30', what: 'Lifted to heighliner', detail: 'Guild heighliner, berth 7' },
     ],
   },
@@ -72,7 +72,7 @@ export const REGISTER = {
     custody: [
       { when: '10,176 AG · 05:50', what: 'Harvested', detail: 'Sihaya Ridge, crew 9' },
       { when: '10,176 AG · 17:12', what: 'Assayed', detail: 'Reference 0X5C19 · purity 97.1%' },
-      { when: '10,176 AG · 21:40', what: 'Sealed by Melange Mercantile', detail: 'Seal MM-207-Σ' },
+      { when: '10,176 AG · 21:40', what: 'Sealed by Melange Mercantile', detail: 'Consignment MM-207-Σ' },
       { when: '10,188 AG · 00:00', what: 'Guarantee lapsed', detail: 'Twelve years after sealing' },
     ],
   },

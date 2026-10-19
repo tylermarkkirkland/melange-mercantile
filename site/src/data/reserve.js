@@ -25,7 +25,7 @@ export const GRADES = [
     name: 'House Select',
     purity: '97.1',
     basin: 'Sihaya Ridge',
-    line: 'The standing grade of the Great Houses. They chose it, which is how it got its name.',
+    line: 'The standing grade of the Great Houses. Pure enough for any House, short of the Emperor himself.',
     tag: 'Available',
   },
   {
@@ -39,7 +39,7 @@ export const GRADES = [
     name: 'Raw Harvest',
     purity: '88.2',
     basin: 'Cielago Deep',
-    line: 'Unrefined and sold by mass, still in the sand it was found in. For Houses that prefer to refine their own.',
+    line: 'Gathered from the open sand and sold before refining. For Houses that prefer to refine their own.',
     tag: 'By mass',
   },
 ];

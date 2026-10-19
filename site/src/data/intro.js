@@ -63,7 +63,7 @@ export const GALLERY = {
   body: 'Five hands carry every consignment. Each one signs the ledger.',
   items: [
     { src: '/photos/seal.webp', word: 'Sealed', line: 'Assayed and sealed in wax where it was found.', alt: 'A black wax seal pressed with the Melange Mercantile pillar beside a pewter seal stamp' },
-    { src: '/photos/tag.webp', word: 'Traced', line: 'Every sack tagged and entered in the ledger.', alt: 'A pewter tag engraved with the pillar tied to a canvas sack of melange' },
+    { src: '/photos/tag.webp', word: 'Traced', line: 'Every container tagged and entered in the ledger.', alt: 'A pewter tag engraved with the pillar tied to a canvas sack of melange' },
     { src: '/photos/crate.webp', word: 'Crated', line: 'Crated at origin. Opened only by the buyer.', alt: 'An iron-bound cargo crate marked Melange Mercantile in a desert hangar' },
     { src: '/photos/ship.webp', word: 'Lifted', line: 'Carried by our frigates to a Guild heighliner.', alt: 'The hull of a Melange Mercantile frigate engraved with the pillar on a desert landing field' },
     { src: '/photos/banner.webp', word: 'Received', line: 'Delivered to the halls of the Great Houses.', alt: 'A black banner bearing the Melange Mercantile pillar in a vast stone hall' },
@@ -77,7 +77,6 @@ export const ARRIVAL = {
   eyebrow: 'Discretion',
   headline: ['NEVER', 'ANNOUNCED,', 'NEVER LATE'],
   body: 'Our ledger is open to CHOAM, and to no one else. Our clients are never named, and never need to be.',
-  record: '0 seals broken in transit',
 };
 
 // Menu: each entry scrolls to a settled moment in its section (in viewport heights)

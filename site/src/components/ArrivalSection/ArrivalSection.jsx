@@ -19,7 +19,6 @@ export default function ArrivalSection() {
             {ARRIVAL.headline.map((line) => <span key={line}>{line}</span>)}
           </h2>
           <p className="arrival__body">{ARRIVAL.body}</p>
-          <p className="arrival__record">{ARRIVAL.record}</p>
         </div>
       </div>
     </section>
