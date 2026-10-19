@@ -53,14 +53,15 @@ const TICK = 'M 3 12 C 6 14, 8 17, 10 21 C 13 13, 18 6, 25 2';
  * Request an allocation. As the section arrives a sheet unrolls across the page
  * (scroll drives --unroll from App). The request is a letter: Melange Mercantile's
  * printed form, filled in in your own hand, with the grade ticked in a printed box.
- * Sending folds the letter, seals it in black wax, and sends it off the page; a
- * fresh sheet unrolls with a note of what was sent.
+ * Sending folds the letter into an envelope, seals it in black wax and sends it
+ * off the page. What was sent is noted on the dark page; asking for another
+ * unrolls a fresh sheet.
  */
 const Allocation = forwardRef(function Allocation(props, ref) {
   const reduced = useReducedMotion();
   const [values, setValues] = useState(EMPTY);
   const [flagged, setFlagged] = useState({});
-  const [phase, setPhase] = useState('letter'); // letter | sending
+  const [phase, setPhase] = useState('letter'); // letter | sending | sent | unrolling
   const [receipt, setReceipt] = useState(null); // what was last sent: { kind, values, reference }
   const sectionRef = useRef(null);
   const anchorRef = useRef(null);
@@ -70,15 +71,51 @@ const Allocation = forwardRef(function Allocation(props, ref) {
   const layerRef = useRef(null);
   const canvasRef = useRef(null);
   const pressRef = useRef(null);
-  const receiptRef = useRef(null);
+  const sentRef = useRef(null);
   const fieldRefs = useRef({});
 
+  // A fresh sheet unrolls across the page, as the first one did as you arrived
+  const unrollFresh = async () => {
+    const frame = frameRef.current;
+    paperRef.current.style.visibility = '';
+    if (prefersReducedMotion()) return;
+    const start = performance.now();
+    const MS = 1700;
+    frame.style.setProperty('--unroll', '0');
+    await new Promise((resolve) => {
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / MS);
+        frame.style.setProperty('--unroll', smooth(t).toFixed(4));
+        if (t < 1) requestAnimationFrame(tick);
+        else resolve();
+      };
+      requestAnimationFrame(tick);
+    });
+    frame.style.removeProperty('--unroll'); // back to the scroll's own value (fully open here)
+  };
+
+  // From the note on the dark page: a new sheet, blank or already partly written
+  const anotherSheet = async (keep = EMPTY) => {
+    setValues(keep);
+    setFlagged({});
+    setPhase('unrolling');
+    await nextFrame();
+    await unrollFresh();
+    setReceipt(null);
+    setPhase('letter');
+    await nextFrame(); // the fields unlock before the cursor goes in
+    const first = keep.grade ? (keep.destination ? 'name' : 'destination') : null;
+    if (first) fieldRefs.current[first]?.focus({ preventScroll: true });
+    else document.querySelector('.alloc__grade input')?.focus({ preventScroll: true });
+  };
+
   // the page scrolls to the anchor (the moment the sheet is fully open), not the section top.
-  // The Reserve can arrive with a grade already ticked.
+  // The Reserve can arrive with a grade already ticked, on a fresh sheet if need be.
   useImperativeHandle(ref, () => ({
     section: anchorRef.current,
     focusInput: () => fieldRefs.current.destination?.focus({ preventScroll: true }),
     circleGrade: (name) => {
+      if (phase === 'sent') { anotherSheet({ ...EMPTY, grade: name }); return; }
       if (phase !== 'letter') return;
       setValues((v) => ({ ...v, grade: name }));
       setFlagged((f) => ({ ...f, grade: false }));
@@ -109,6 +146,11 @@ const Allocation = forwardRef(function Allocation(props, ref) {
     };
   }, []);
 
+  // announce what was sent once the note is on the page
+  useEffect(() => {
+    if (phase === 'sent') sentRef.current?.focus({ preventScroll: true });
+  }, [phase]);
+
   const locked = phase !== 'letter';
   const grade = GRADES.find((g) => g.name === values.grade);
 
@@ -119,32 +161,7 @@ const Allocation = forwardRef(function Allocation(props, ref) {
     if (flagged[name] && !problemsIn(next)[name]) setFlagged((f) => ({ ...f, [name]: false }));
   };
 
-  // A fresh sheet unrolls across the page, as the first one did as you arrived
-  const unrollFresh = async () => {
-    const frame = frameRef.current;
-    const start = performance.now();
-    const MS = 1700;
-    frame.style.setProperty('--unroll', '0');
-    paperRef.current.style.visibility = '';
-    await new Promise((resolve) => {
-      const tick = (now) => {
-        const t = Math.min(1, (now - start) / MS);
-        frame.style.setProperty('--unroll', smooth(t).toFixed(4));
-        if (t < 1) requestAnimationFrame(tick);
-        else resolve();
-      };
-      requestAnimationFrame(tick);
-    });
-    frame.style.removeProperty('--unroll'); // back to the scroll's own value (fully open here)
-  };
-
-  const startFresh = (keep, sent) => {
-    setValues(keep);
-    setFlagged({});
-    if (sent) setReceipt(sent);
-  };
-
-  // Fold, seal and send a complete letter, then unroll a fresh sheet
+  // Fold a complete letter into an envelope, seal it and send it off the page
   const send = async (letter) => {
     setFlagged({});
     document.activeElement?.blur();
@@ -152,21 +169,27 @@ const Allocation = forwardRef(function Allocation(props, ref) {
     const sent = { kind: chosen?.warrant ? 'register' : 'received', values: letter, reference: makeReference() };
 
     if (prefersReducedMotion()) {
-      startFresh(EMPTY, sent);
-      setTimeout(() => receiptRef.current?.focus({ preventScroll: true }), 50);
+      paperRef.current.style.visibility = 'hidden';
+      setReceipt(sent);
+      setPhase('sent');
       return;
     }
 
     setPhase('sending');
     await nextFrame(); // the buttons and fields settle into their locked look before they're copied
-    const fold = createFold({ frame: frameRef.current, paper: paperRef.current, letter: letterRef.current, layer: layerRef.current });
+    const fold = createFold({ frame: frameRef.current, paper: paperRef.current, layer: layerRef.current });
     paperRef.current.style.visibility = 'hidden'; // the copies take its place
     await fold.fold();
 
-    // the seal comes down on the middle of the folded letter
+    // the seal comes down on the flap's point. Its canvas is cut off at the
+    // envelope's lower edge, so the stamp's shadow doesn't fall onto the dark page.
     const canvas = canvasRef.current;
-    canvas.style.left = `${fold.center.x - canvas.offsetWidth / 2}px`;
-    canvas.style.top = `${fold.center.y - canvas.offsetHeight / 2}px`;
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
+    const canvasTop = fold.sealAt.y - h / 2;
+    canvas.style.left = `${fold.sealAt.x - w / 2}px`;
+    canvas.style.top = `${canvasTop}px`;
+    canvas.style.clipPath = `inset(0 0 ${Math.max(0, canvasTop + h - fold.bottom)}px 0)`;
     canvas.classList.add('is-on');
     await wait(150);
     await pressRef.current?.press();
@@ -175,13 +198,12 @@ const Allocation = forwardRef(function Allocation(props, ref) {
     await fold.away([canvas]);
     fold.clear([canvas]);
     canvas.classList.remove('is-on');
+    canvas.style.clipPath = '';
     pressRef.current?.reset();
 
-    startFresh(EMPTY, sent);
-    await nextFrame();
-    await unrollFresh();
-    setPhase('letter');
-    receiptRef.current?.focus({ preventScroll: true });
+    setValues(EMPTY);
+    setReceipt(sent);
+    setPhase('sent');
   };
 
   const onSubmit = (e) => {
@@ -201,23 +223,15 @@ const Allocation = forwardRef(function Allocation(props, ref) {
   // Reviewing: play the whole send again. An unfinished letter is filled in with a
   // sample first, so there's always something to fold.
   const replay = async () => {
-    if (locked) return;
-    const letter = hasProblems(values) ? SAMPLE_LETTER : values;
-    if (letter !== values) {
-      setValues(letter);
-      await nextFrame();
-      await nextFrame(); // let the sample be written onto the sheet before it's copied
-    }
+    if (phase === 'sending' || phase === 'unrolling') return;
+    if (phase === 'sent') await anotherSheet(SAMPLE_LETTER);
+    const letter = phase === 'sent' || hasProblems(values) ? SAMPLE_LETTER : values;
+    setValues(letter);
+    await nextFrame();
+    await nextFrame(); // let the sample be written onto the sheet before it's copied
     send(letter);
   };
   if (import.meta.env.DEV) window.__allocation = { replay };
-
-  // "Request House Select instead": the same letter again, with the grade changed
-  const offer = () => {
-    startFresh({ ...receipt.values, grade: 'House Select' });
-    setReceipt(null);
-    setTimeout(() => fieldRefs.current.name?.focus({ preventScroll: true }), 50);
-  };
 
   const hand = (name) => ({
     ref: (el) => { fieldRefs.current[name] = el; },
@@ -233,7 +247,6 @@ const Allocation = forwardRef(function Allocation(props, ref) {
       <span className="alloc__anchor" ref={anchorRef} aria-hidden="true" />
       <div className="alloc__frame" ref={frameRef}>
         <div className="alloc__paper" ref={paperRef}>
-          {/* when a receipt is written the letter grows; it glides to its new centre rather than jumping */}
           <motion.form
             layout="position"
             transition={{ duration: reduced ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -246,24 +259,6 @@ const Allocation = forwardRef(function Allocation(props, ref) {
               <h2 className="alloc__title" id="alloc-title">{ALLOCATION_COPY.title}</h2>
               <span className="alloc__flourish" aria-hidden="true"><i /></span>
             </header>
-
-            {/* a note of the last letter sent, at the head of the fresh sheet */}
-            {result && (
-              <div className="alloc__receipt">
-                <p className="alloc__receipt-label" ref={receiptRef} tabIndex={-1}>
-                  {result.label} <span className="alloc__ref">Reference {receipt.reference}</span>
-                </p>
-                <p className="alloc__receipt-body">
-                  {result.body(receipt.values)}
-                  {result.offer && (
-                    <>
-                      {' '}
-                      <button type="button" className="alloc__link" onClick={offer}>{result.offer}</button>
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
 
             <p className="alloc__salutation">{ALLOCATION_COPY.salutation}</p>
 
@@ -313,7 +308,7 @@ const Allocation = forwardRef(function Allocation(props, ref) {
             <div className="alloc__close">
               <div className="alloc__sign">
                 <p className="alloc__closing">{ALLOCATION_COPY.closing}</p>
-                <Blank name="name" flagged={flagged.name} className="alloc__blank--signature" inputProps={{ ...hand('name'), autoComplete: 'organization' }} />
+                <Blank name="name" flagged={flagged.name} className="alloc__blank--signature" inputProps={hand('name')} />
               </div>
               <div className="alloc__seal-spot">
                 <button className="alloc__submit" type="submit" disabled={locked}>{ALLOCATION_COPY.submit}</button>
@@ -322,12 +317,32 @@ const Allocation = forwardRef(function Allocation(props, ref) {
           </motion.form>
         </div>
         <div className="alloc__roll" aria-hidden="true" />
-        {/* the folding letter and its seal are drawn here, over the sheet */}
+        {/* the folding envelope and its seal are drawn here, over the sheet */}
         <div className="alloc__dispatch" ref={layerRef} aria-hidden="true">
           <canvas ref={canvasRef} className="alloc__seal-canvas" />
         </div>
-        {SHOW_REPLAY && (
-          <button type="button" className="alloc__replay" onClick={replay} disabled={locked}>
+
+        {/* once the envelope has gone: what was sent, on the dark page */}
+        {phase === 'sent' && result && (
+          <div className="alloc__sent">
+            <p className="alloc__sent-ref">Reference {receipt.reference}</p>
+            <h3 className="alloc__sent-title" ref={sentRef} tabIndex={-1}>{result.title}</h3>
+            <p className="alloc__sent-body">{result.body(receipt.values)}</p>
+            <p className="alloc__sent-actions">
+              <button type="button" className="alloc__sent-button is-primary" onClick={() => anotherSheet()}>
+                {ALLOCATION_COPY.another}
+              </button>
+              {result.offer && (
+                <button type="button" className="alloc__sent-button" onClick={() => anotherSheet({ ...receipt.values, grade: 'House Select' })}>
+                  {result.offer}
+                </button>
+              )}
+            </p>
+          </div>
+        )}
+
+        {SHOW_REPLAY && (phase === 'letter' || phase === 'sent') && (
+          <button type="button" className={`alloc__replay${phase === 'sent' ? ' is-dark' : ''}`} onClick={replay}>
             Replay fold
           </button>
         )}

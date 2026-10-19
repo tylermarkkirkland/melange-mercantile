@@ -7,6 +7,7 @@ export const ALLOCATION_COPY = {
   closing: 'Yours in trade,',
   submit: 'Seal and send',
   sealing: 'Sealing your letter…',
+  another: 'Request another allocation',
   gradeLegend: 'Tick one grade',
 };
 
@@ -49,16 +50,16 @@ export const SAMPLE_LETTER = {
 // A believable reference number for the reply
 export const makeReference = () => `MM-REQ-${String(Math.floor(1000 + Math.random() * 8999))}`;
 
-// The two answers, noted at the head of the fresh sheet once the letter has gone. Imperial Reserve is
+// The two answers, noted on the dark page once the envelope has gone. Imperial Reserve is
 // for warrant holders only, so without one the request joins the waiting
 // register instead: a waiting place, not a refusal.
 export const RESULTS = {
   received: {
-    label: 'Sealed and sent.',
+    title: 'Sealed and sent',
     body: (r) => `A factor of Melange Mercantile will review your request for ${r.grade} and reply to ${r.email} within seven days.`,
   },
   register: {
-    label: 'Entered on the waiting register.',
+    title: 'On the waiting register',
     body: (r) =>
       `Imperial Reserve is allocated only to warrant holders, so ${r.name} is now on the waiting register. Melange Mercantile will write to ${r.email} when an allocation opens.`,
     offer: 'Request House Select instead',

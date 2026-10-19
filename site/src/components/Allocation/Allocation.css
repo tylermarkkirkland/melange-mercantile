@@ -229,6 +229,16 @@
 
 .alloc__hand[readonly] { cursor: default; }
 
+/* if the browser fills a blank in for you, it still reads as ink on parchment */
+.alloc__hand:-webkit-autofill,
+.alloc__hand:-webkit-autofill:hover,
+.alloc__hand:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--hand);
+  -webkit-box-shadow: 0 0 0 1000px var(--parchment) inset;
+  caret-color: var(--hand);
+  transition: background-color 100000s 0s;
+}
+
 /* printed under the line like a form, in small capitals */
 .alloc__caption,
 .alloc__grade-note {
@@ -382,7 +392,90 @@
   color: var(--ink);
 }
 
-.alloc__replay:disabled { opacity: 0; pointer-events: none; }
+.alloc__replay.is-dark { border-color: var(--pewter); color: var(--silver-light); }
+
+/* ---------- sent: the note of what was sent, on the dark page ---------- */
+.alloc__sent {
+  position: absolute;
+  top: var(--paper-top);
+  left: 56px;
+  right: 56px;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: sent-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes sent-in { from { opacity: 0; transform: translateY(12px); } }
+
+.alloc__sent-ref {
+  margin: 0;
+  font: 500 12px/16px var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pewter);
+}
+
+/* ceremonial/heading */
+.alloc__sent-title {
+  margin: 16px 0 0;
+  font: 400 32px/40px var(--font-ceremonial);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.alloc .alloc__sent-title:focus,
+.alloc .alloc__sent-title:focus-visible { outline: none; }
+
+.alloc__sent-body {
+  max-width: 34em;
+  margin: 20px 0 0;
+  font: 400 18px/32px var(--font-sans);
+  color: var(--silver);
+}
+
+.alloc__sent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin: 40px 0 0;
+}
+
+/* the site's buttons, as on Verify */
+.alloc__sent-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 26px;
+  background: none;
+  border: 1px solid var(--pewter);
+  border-radius: 2px;
+  cursor: pointer;
+  font: 500 16px/1 var(--font-sans);
+  color: var(--chrome);
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.alloc__sent-button:hover { border-color: var(--chrome); }
+
+.alloc__sent-button.is-primary {
+  background: var(--chrome);
+  border-color: var(--chrome);
+  color: var(--void);
+}
+
+.alloc__sent-button.is-primary:hover { background: var(--silver-light); border-color: var(--silver-light); }
+
+.alloc__sent :focus-visible {
+  outline: 1px solid var(--silver-light);
+  outline-offset: 4px;
+}
 
 /* ---------- sending: the letter folds, is sealed, and leaves the page ---------- */
 .alloc__dispatch {
@@ -413,7 +506,8 @@
 }
 
 .alloc__panel,
-.alloc__flap {
+.alloc__flap,
+.alloc__corner {
   position: absolute;
   transform-style: preserve-3d;
 }
@@ -510,37 +604,6 @@
   box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 4px var(--parchment);
 }
 
-/* ---------- the note of the last letter sent, at the head of a fresh sheet ---------- */
-.alloc__receipt {
-  margin: 20px auto 0;
-  max-width: 40em;
-  padding: 10px 0 12px;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  text-align: center;
-  animation: hint-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.alloc__receipt-label,
-.alloc__receipt-body { margin: 0; color: var(--ink); }
-
-.alloc__receipt-label { font: italic 500 22px/32px 'Cormorant Garamond', Georgia, serif; }
-
-.alloc .alloc__receipt-label:focus,
-.alloc .alloc__receipt-label:focus-visible { outline: none; }
-
-.alloc__receipt-body { font: 500 18px/28px 'Cormorant Garamond', Georgia, serif; }
-
-.alloc__receipt .alloc__link { min-height: 0; font-size: 18px; }
-
-.alloc__ref {
-  margin-left: 8px;
-  white-space: nowrap;
-  font: 500 17px/20px 'Cormorant SC', 'Cormorant Garamond', serif;
-  font-style: normal;
-  letter-spacing: 0.06em;
-  color: var(--ink-soft);
-}
 
 .alloc__link {
   min-height: 44px;
@@ -585,12 +648,11 @@
   .alloc__blank--signature { width: 100%; }
   .alloc__seal-spot { grid-row: 2; height: 168px; margin-top: 40px; }
   .alloc__submit { width: 100%; }
-  .alloc__ref { display: block; margin: 0; }
   .alloc__grade-row { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alloc__receipt,
+  .alloc__sent,
   .alloc__box path,
   .alloc__hint { animation: none; transition: none; }
 }
