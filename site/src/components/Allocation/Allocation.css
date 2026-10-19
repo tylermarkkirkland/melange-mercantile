@@ -260,9 +260,7 @@
 
 @keyframes hint-in { from { opacity: 0; transform: translateY(-3px); } }
 
-.alloc.is-sealing .alloc__caption,
-.alloc.is-received .alloc__caption,
-.alloc.is-register .alloc__caption { opacity: 0.5; }
+.alloc.is-sending .alloc__caption { opacity: 0.5; }
 
 /* ---------- grades: a printed "circle one" line ---------- */
 .alloc__grades {
@@ -351,6 +349,134 @@
   text-align: center;
 }
 
+/* Option A: the grade is a blank in the sentence. It's a button that opens the grades. */
+.alloc__blank--grade { width: 8.5em; }
+
+.alloc__pick {
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alloc__pick.is-empty { color: rgba(7, 10, 12, 0.28); } /* faint, like the other blanks' examples */
+.alloc__pick:not(:disabled):hover { border-bottom-color: var(--ink); }
+.alloc__pick:disabled { cursor: default; }
+
+/* the grades open beneath the grade's blank, clear of its printed caption */
+.alloc__grades--a { margin-top: 24px; animation: hint-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Option B: printed tick boxes, ahead of the request */
+.alloc__grades--b { margin-top: 20px; }
+.alloc__grades--b .alloc__grade { padding: 8px 10px; gap: 8px; }
+.alloc__grades--b .alloc__grade + .alloc__grade::before { left: -3px; }
+.alloc__grade-name { white-space: nowrap; }
+
+/* a blank and the punctuation after it stay on one line */
+.alloc__keep { white-space: nowrap; }
+
+.alloc__box {
+  position: relative;
+  align-self: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  border: 1.5px solid var(--ink);
+}
+
+.alloc__box svg {
+  position: absolute;
+  left: -1px;
+  top: -9px;
+  width: 28px;
+  height: 24px;
+  overflow: visible;
+}
+
+.alloc__box path {
+  fill: none;
+  stroke: var(--hand);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.alloc__grade.is-marked .alloc__box path { stroke-dashoffset: 0; opacity: 1; }
+
+/* ---------- sending: the letter folds, is sealed, and leaves the page ---------- */
+.alloc__dispatch {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* the seal's canvas is much larger than the seal so the stamp can come down from
+   well above; it sits on the folded letter only while sealing */
+.alloc__seal-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2; /* above the folded paper */
+  width: 480px;
+  height: 640px;
+  visibility: hidden;
+}
+
+.alloc__seal-canvas.is-on { visibility: visible; }
+
+.alloc__fold {
+  position: absolute;
+  z-index: 1;
+  perspective: 2400px;
+}
+
+.alloc__panel,
+.alloc__flap {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+.alloc__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.alloc__face--x { transform: rotateX(180deg); }
+.alloc__face--y { transform: rotateY(180deg); }
+
+/* the back of the sheet: plain parchment, a shade darker than the written side */
+.alloc__face--back {
+  background:
+    radial-gradient(ellipse 80% 90% at 40% 35%, rgba(255, 248, 230, 0.28), transparent 70%),
+    #d9c79f;
+  box-shadow: inset 0 0 40px rgba(110, 72, 28, 0.32), inset 0 0 0 1px rgba(90, 58, 22, 0.25);
+}
+
+.alloc__shade {
+  position: absolute;
+  inset: 0;
+  background: #2a1c0a;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alloc__fold-shadow {
+  position: absolute;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
+  opacity: 0;
+}
+
 /* ---------- closing: signature on the left, the seal (and the send button) on the right ---------- */
 .alloc__close {
   display: grid;
@@ -377,35 +503,12 @@
   line-height: 56px;
 }
 
-/* the postscript, written across the foot of the letter once it is sealed */
-.alloc__ps { grid-column: 1 / -1; margin-top: 20px; }
-.alloc__ps:empty { display: none; }
-
-.alloc__result-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0 32px;
-}
-
-/* the place the seal goes: level with the signature. The canvas is much larger
-   than the spot so the stamp can come down from well above; it never takes a click */
+/* the send button: level with the signature */
 .alloc__seal-spot {
   position: relative;
   height: 124px; /* the signature block's height, so the two sit level */
   display: grid;
   place-items: center;
-}
-
-.alloc__seal-canvas {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 480px;
-  height: 640px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
 }
 
 /* ceremonial/label in a double-ruled cartouche: the one button on the sheet */
@@ -425,28 +528,36 @@
   transition: background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
 }
 
-.alloc__submit:hover {
+.alloc__submit:disabled { cursor: default; }
+
+.alloc__submit:not(:disabled):hover {
   background: var(--ink);
   color: var(--parchment);
   box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 4px var(--parchment);
 }
 
-/* the answer is written into the letter as a postscript */
-.alloc__sealing,
-.alloc__result-label {
-  margin: 0;
-  font: italic 500 24px/32px 'Cormorant Garamond', Georgia, serif;
-  color: var(--ink);
+/* ---------- the note of the last letter sent, at the head of a fresh sheet ---------- */
+.alloc__receipt {
+  margin: 20px auto 0;
+  max-width: 40em;
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  text-align: center;
+  animation: hint-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.alloc__sealing { padding-top: 12px; animation: sealing-breathe 1.6s ease-in-out infinite; }
+.alloc__receipt-label,
+.alloc__receipt-body { margin: 0; color: var(--ink); }
 
-@keyframes sealing-breathe { 50% { opacity: 0.45; } }
+.alloc__receipt-label { font: italic 500 22px/32px 'Cormorant Garamond', Georgia, serif; }
 
-.alloc__result { animation: hint-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.alloc .alloc__receipt-label:focus,
+.alloc .alloc__receipt-label:focus-visible { outline: none; }
 
-.alloc .alloc__result-label:focus,
-.alloc .alloc__result-label:focus-visible { outline: none; }
+.alloc__receipt-body { font: 500 18px/28px 'Cormorant Garamond', Georgia, serif; }
+
+.alloc__receipt .alloc__link { min-height: 0; font-size: 18px; }
 
 .alloc__ref {
   margin-left: 8px;
@@ -455,19 +566,6 @@
   font-style: normal;
   letter-spacing: 0.06em;
   color: var(--ink-soft);
-}
-
-.alloc__result-body {
-  margin: 0;
-  font: 500 20px/30px 'Cormorant Garamond', Georgia, serif;
-  color: var(--ink);
-}
-
-.alloc__result-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 28px;
-  margin: 0;
 }
 
 .alloc__link {
@@ -513,17 +611,15 @@
   .alloc__blank--signature { width: 100%; }
   .alloc__seal-spot { grid-row: 2; height: 168px; margin-top: 40px; }
   .alloc__submit { width: 100%; }
-  /* the postscript reads top to bottom: what happened, the reference, then the links */
-  .alloc__result { display: flex; flex-direction: column; }
-  .alloc__result-head { display: contents; }
   .alloc__ref { display: block; margin: 0; }
-  .alloc__result-body { order: 1; margin-top: 4px; }
-  .alloc__result-actions { order: 2; flex-direction: column; align-items: flex-start; margin-top: 8px; }
+  .alloc__blank--grade { display: block; width: 100%; margin: 4px 0 32px; }
+  .alloc__grades--b .alloc__grade-row { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .alloc__loop path { transition: none; }
-  .alloc__sealing,
-  .alloc__result,
-  .alloc__hint { animation: none; }
+  .alloc__receipt,
+  .alloc__grades--a,
+  .alloc__box path,
+  .alloc__hint { animation: none; transition: none; }
 }

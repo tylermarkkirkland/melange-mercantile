@@ -8,6 +8,7 @@ export const ALLOCATION_COPY = {
   submit: 'Seal and send',
   sealing: 'Sealing your letter…',
   gradeLegend: 'Circle one grade',
+  gradeLegendTick: 'Tick one grade',
 };
 
 // the grades themselves live in data/reserve.js
@@ -27,7 +28,10 @@ export const FIELDS = {
     hint: 'Add an address with an @ in it',
   },
   grade: {
-    hint: 'Circle one of the four grades',
+    caption: 'Choose a grade',
+    placeholder: 'which grade',
+    hint: 'Choose one of the four grades',
+    hintTick: 'Tick one of the four grades',
   },
   name: {
     caption: 'Your name or House',
@@ -41,7 +45,7 @@ export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 // A believable reference number for the reply
 export const makeReference = () => `MM-REQ-${String(Math.floor(1000 + Math.random() * 8999))}`;
 
-// The two answers, written onto the letter as a postscript. Imperial Reserve is
+// The two answers, noted at the head of the fresh sheet once the letter has gone. Imperial Reserve is
 // for warrant holders only, so without one the request joins the waiting
 // register instead: a waiting place, not a refusal.
 export const RESULTS = {
