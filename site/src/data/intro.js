@@ -88,6 +88,6 @@ export const MENU = [
   { label: 'The Reserve', at: 7.2, image: '/photos/reserve.webp' },
   { label: 'The Passage', at: 8.9, image: '/photos/seal.webp' },
   { label: 'Discretion', at: 15.8, image: '/photos/arrival.webp' },
-  { label: 'Allocation', action: 'allocation', image: '/photos/allocation.webp' },
-  { label: 'Verify', action: 'verify', image: '/photos/certificate.webp' },
+  { label: 'Allocation', action: 'allocation', image: '/photos/certificate.webp' },
+  { label: 'Verify', action: 'verify', image: '/photos/verify.webp' },
 ];
