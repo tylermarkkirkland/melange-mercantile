@@ -25,6 +25,10 @@ body {
   margin: 0;
 }
 
+/* Lenis drives the scroll; Chrome's scroll anchoring would nudge it behind Lenis's
+   back whenever a section grows (Verify's certificate landed 48px up under the top bar) */
+html { overflow-anchor: none; }
+
 body {
   background: var(--ink);
   color: var(--silver);
@@ -117,10 +121,22 @@ html.is-intro body {
   top: 0;
   left: 0;
   right: 0;
-  height: 160px;
+  height: 128px;
   z-index: 3;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(3, 4, 5, 0.98) 0%, rgba(3, 4, 5, 0.96) 58%, rgba(3, 4, 5, 0) 100%);
+  /* one band: solid behind the logo and menu, then an eased dissolve (no straight
+     ramp, which leaves a visible crease and reads as a second bar). Clear by 128px,
+     so content below the logo is never dimmed */
+  background: linear-gradient(180deg,
+    rgb(3, 4, 5) 0px,
+    rgb(3, 4, 5) 76px,
+    rgba(3, 4, 5, 0.96) 84px,
+    rgba(3, 4, 5, 0.88) 92px,
+    rgba(3, 4, 5, 0.74) 100px,
+    rgba(3, 4, 5, 0.55) 107px,
+    rgba(3, 4, 5, 0.34) 114px,
+    rgba(3, 4, 5, 0.15) 121px,
+    rgba(3, 4, 5, 0) 128px);
   opacity: var(--mark-show, 0);
 }
 
